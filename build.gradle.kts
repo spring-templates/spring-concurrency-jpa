@@ -5,7 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.4"
 }
 
-group = "com.thread"
+group = "com.web.jpa"
 version = "0.1.0-SNAPSHOT"
 
 java {

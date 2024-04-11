@@ -6,10 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
-public class SpringThreadConcurrencyApplication {
+public class SpringWebJpaConcurrencyApplication {
 
     public static void main(String[] args) {
-        ConfigurableApplicationContext context = SpringApplication.run(SpringThreadConcurrencyApplication.class, args);
+        ConfigurableApplicationContext context = SpringApplication.run(SpringWebJpaConcurrencyApplication.class, args);
         var performance = context.getBean(CounterBenchmark.class).benchmark();
         System.out.println("|----------------------|---------------|---------------|---------------|");
         System.out.println(performance);
