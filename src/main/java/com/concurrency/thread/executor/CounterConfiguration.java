@@ -22,17 +22,8 @@ public class CounterConfiguration {
         return new CounterBenchmarkOptions(counter, iterations, totalRequest, nThreads);
     }
 
-    public record CounterConfig(Counter counter, int iterations, int totalRequests, int nThreads) {
-        @Override
-        public String toString() {
-            // multiple-lines format
-            return """
-                CounterConfig {
-                    counter=%s,
-                    iterations=%d,
-                    totalRequests=%d,
-                    nThreads=%d
-                }""".formatted(counter.getClass().getSimpleName(), iterations, totalRequests, nThreads).stripIndent();
-        }
+    @Bean
+    public CounterBenchmark counterBenchmark(CounterBenchmarkOptions config) {
+        return new CounterBenchmark(config);
     }
 }
