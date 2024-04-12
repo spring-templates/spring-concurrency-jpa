@@ -5,11 +5,17 @@ plugins {
     id("io.spring.dependency-management") version "1.1.4"
 }
 
-group = "com.thread"
-version = "0.1.0-SNAPSHOT"
+group = "com.concurrency"
+version = "0.0.1-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
+}
+
+configurations {
+    compileOnly {
+        extendsFrom(configurations.annotationProcessor.get())
+    }
 }
 
 repositories {
@@ -17,6 +23,15 @@ repositories {
 }
 
 dependencies {
+    // spring-web-jpa-concurrency
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    runtimeOnly("com.mysql:mysql-connector-j")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    // spring-thread-concurrency
     implementation("org.springframework.boot:spring-boot-starter")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -30,6 +45,7 @@ tasks.all {
 
 tasks {
     test {
+        @Suppress("SpellCheckingInspection")
         jvmArgs("-Xshare:off", "-XX:+EnableDynamicAgentLoading")
         useJUnitPlatform()
         finalizedBy(jacocoTestReport)
