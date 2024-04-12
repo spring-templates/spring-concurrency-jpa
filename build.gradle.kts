@@ -5,8 +5,8 @@ plugins {
     id("io.spring.dependency-management") version "1.1.4"
 }
 
-group = "com.web.jpa"
-version = "0.1.0-SNAPSHOT"
+group = "com.concurrency"
+version = "0.0.1-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -30,6 +30,7 @@ tasks.all {
 
 tasks {
     test {
+        @Suppress("SpellCheckingInspection")
         jvmArgs("-Xshare:off", "-XX:+EnableDynamicAgentLoading")
         useJUnitPlatform()
         finalizedBy(jacocoTestReport)
