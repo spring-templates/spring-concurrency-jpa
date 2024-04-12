@@ -21,25 +21,6 @@ class BatchCounterTest {
         return Stream.of(new AtomicBatchCounter(), new ConcurrentParameterizedBatchingCounter());
     }
 
-    private static List<Integer> range() {
-        return IntStream.range(0, 1000).boxed().collect(Collectors.toList());
-    }
-
-    private static List<Integer> range(int numberOfThreads, int expected) {
-        int baseValue = expected / numberOfThreads;
-        int remainder = expected % numberOfThreads;
-
-        List<Integer> result = new ArrayList<>();
-        for (int i = 0; i < numberOfThreads; i++) {
-            if (i < remainder) {
-                result.add(baseValue + 1);
-            } else {
-                result.add(baseValue);
-            }
-        }
-        return result;
-    }
-
     @ParameterizedTest
     @MethodSource("batchCounterProvider")
     void clearTest(BatchCounter counter) {
@@ -66,6 +47,10 @@ class BatchCounterTest {
         Assertions.assertEquals(partialSum, counter.show());
     }
 
+    private static List<Integer> range() {
+        return IntStream.range(0, 1000).boxed().collect(Collectors.toList());
+    }
+
     @ParameterizedTest
     @MethodSource("batchCounterProvider")
     void conditionalMultiThreading(BatchCounter counter) {
@@ -87,6 +72,21 @@ class BatchCounterTest {
         }
         // then
         Assertions.assertEquals(expected, counter.show());
+    }
+
+    private static List<Integer> range(int numberOfThreads, int expected) {
+        int baseValue = expected / numberOfThreads;
+        int remainder = expected % numberOfThreads;
+
+        List<Integer> result = new ArrayList<>();
+        for (int i = 0; i < numberOfThreads; i++) {
+            if (i < remainder) {
+                result.add(baseValue + 1);
+            } else {
+                result.add(baseValue);
+            }
+        }
+        return result;
     }
 
     @ParameterizedTest
