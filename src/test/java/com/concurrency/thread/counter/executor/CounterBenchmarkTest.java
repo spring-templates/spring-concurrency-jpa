@@ -1,4 +1,4 @@
-package com.concurrency.thread.executor;
+package com.concurrency.thread.counter.executor;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -10,12 +10,15 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = CounterConfiguration.class)
 public class CounterBenchmarkTest {
 
-    @Autowired
-    private CounterBenchmark counterBenchmark;
+  /**
+   * The counter benchmark.
+   */
+  @Autowired
+  private CounterBenchmark benchmark;
 
-    @Test
-    void test() {
-        var performance = counterBenchmark.benchmark();
-        Assertions.assertNotNull(performance);
-    }
+  @Test
+  void test() {
+    var performance = benchmark.run();
+    Assertions.assertNotNull(performance);
+  }
 }
