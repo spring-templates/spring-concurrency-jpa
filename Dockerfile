@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM gradle:8.7.0-jdk21-alpine as build
+FROM --platform=linux/amd64 gradle:8.7.0-jdk21-alpine as build
 WORKDIR /app
 COPY build.gradle.kts .
 COPY dumpJsa.gradle.kts .
