@@ -88,7 +88,8 @@ public class CounterBenchmark {
     doAdd(iterPerThread, task);
     if (counter.show() != totalRequests) {
       System.out.printf("Counter: %d, Total: %d%n", counter.show(),
-                        totalRequests);
+          totalRequests
+      );
     }
 
     long timeOnEnd = System.currentTimeMillis();
@@ -98,7 +99,8 @@ public class CounterBenchmark {
     long timeElapsed = timeOnEnd - timeOnStart;
     long memoryUsed = memoryOnEnd - memoryOnStart;
     return new Performance(counterName, timeElapsed, iterPerThread.size(),
-                           memoryUsed);
+        memoryUsed
+    );
   }
 
   private void doAdd(final List<Integer> params, final Consumer<Integer> task) {
