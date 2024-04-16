@@ -24,8 +24,8 @@ tasks.register<DumpJsa>("dumpJsa") {
     val jsaFile = Paths.get(jsaPathMain)
     val jarFile = Paths.get(jarPath)
     val isJsaOutdated =
-        Files.notExists(jsaFile) || Files.getLastModifiedTime(jarFile).toMillis() > Files.getLastModifiedTime(jsaFile)
-            .toMillis()
+            Files.notExists(jsaFile) || Files.getLastModifiedTime(jarFile).toMillis() > Files.getLastModifiedTime(jsaFile)
+                    .toMillis()
 
     if (isJsaOutdated) {
         val commandMain = listOf("java", "-Xshare:dump", "-XX:SharedArchiveFile=$jsaPathMain", "-jar", jarPath)

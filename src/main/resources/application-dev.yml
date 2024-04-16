@@ -1,0 +1,24 @@
+#
+# https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html
+#
+
+# Core configuration
+spring.threads.virtual.enabled: true
+
+# Database configuration
+## HikariCP configuration
+spring.datasource:
+  hikari.transaction-isolation: TRANSACTION_READ_COMMITTED
+
+# @Overrides
+# JPA configuration
+spring.jpa:
+  open-in-view: false
+  show-sql: true
+  ## Hibernate native properties
+  properties.hibernate:
+    format-sql: true
+    use_sql_comments: true
+    generate_statistics: true
+    id.new_generator_mappings: true
+
