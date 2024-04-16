@@ -23,8 +23,18 @@ jobs:
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
+        env:
+          BASE_DIR: ${{ runner.os == 'Windows' && '~/Users/${{ github.actor }}' || '~' }}
+          GRADLE_CACHE_DIR:
+            ${{ env.BASE_DIR }}/.gradle/caches
         with:
-          path: ~/.gradle/caches
+          path: |
+            ${{ env.GRADLE_CACHE_DIR }}
+            !${{ env.GRADLE_CACHE_DIR }}/6.*
+            !${{ env.GRADLE_CACHE_DIR }}/7.*
+            !${{ env.GRADLE_CACHE_DIR }}/journal-1
+            !${{ env.GRADLE_CACHE_DIR }}/user-id.txt
+            !${{ env.GRADLE_CACHE_DIR }}/user-id.txt.lock
           key: ${{ runner.os }}-gradle-${{ matrix.java }}-${{ hashFiles('**/build.gradle.kts') }}
           restore-keys: |
             ${{ runner.os }}-gradle-${{ matrix.java }}-
