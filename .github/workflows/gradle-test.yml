@@ -38,7 +38,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: spring-templates/spring-concurrency-thread
+          slug: ${{ github.repository }}
           fail_ci_if_error: true
           verbose: true
           flags: ${{ github.ref == 'refs/pull/develop' && 'integration' || 'unittests' }}
