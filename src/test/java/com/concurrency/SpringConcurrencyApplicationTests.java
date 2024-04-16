@@ -1,6 +1,6 @@
 package com.concurrency;
 
-import com.concurrency.thread.executor.CounterConfiguration;
+import com.concurrency.thread.counter.executor.CounterConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -8,8 +8,9 @@ import org.springframework.test.context.ContextConfiguration;
 @SpringBootTest
 @ContextConfiguration(classes = CounterConfiguration.class)
 class SpringConcurrencyApplicationTests {
-    @Test
-    @SuppressWarnings("EmptyMethod")
-    void contextLoads() {
-    }
+
+  @Test
+  @SuppressWarnings("EmptyMethod")
+  void contextLoads() {
+  }
 }

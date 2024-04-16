@@ -1,0 +1,12 @@
+#
+# https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html
+#
+
+# @Overrides
+# Initialize database strategy
+spring.jpa.generate-ddl: false
+spring.jpa.hibernate.ddl-auto: validate
+spring.sql.init:
+  mode: always
+  schema-locations: classpath:/schema.sql
+  data-locations: classpath:/data.sql
