@@ -1,5 +1,11 @@
-.gradle
-build
+.github
 .idea
-*.jar
-*.war
+.env.example
+.env.local
+.gitignore
+README.md
+.gitmessage
+LICENSE
+SunStyle_edited.xml
+codecov.yml
+docker-compose.yaml
