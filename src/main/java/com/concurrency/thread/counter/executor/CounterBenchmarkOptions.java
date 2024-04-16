@@ -19,6 +19,7 @@ public record CounterBenchmarkOptions(
             nThreads=%d
         }""".stripIndent()
         .formatted(counter.getClass().getSimpleName(),
-                   iterations, totalRequests, threads);
+            iterations, totalRequests, threads
+        );
   }
 }

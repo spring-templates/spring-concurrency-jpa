@@ -6,8 +6,6 @@
 ![Codecov](https://img.shields.io/badge/Codecov-F01F7A?logo=codecov&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
 
-
-
 # 관심사
 
 # 정보
