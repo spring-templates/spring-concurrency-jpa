@@ -7,7 +7,7 @@ on:
       - feature/**
 
 jobs:
-  setup:
+  setup_and_test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -27,17 +27,12 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-  test:
-    needs: setup
-    runs-on: ${{ matrix.os }}
-    steps:
       - name: Run gradlew test
         run: ./gradlew test --warning-mode=all
 
   coverage:
-    needs: test
-    runs-on: ${{ matrix.os }}
+    needs: setup_and_test
+    runs-on: ubuntu-latest
     steps:
       - name: Upload test coverage to Codecov.io
         uses: codecov/codecov-action@v4
