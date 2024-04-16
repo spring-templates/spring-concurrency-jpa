@@ -1,0 +1,45 @@
+#file: noinspection SpellCheckingInspection
+version: "3.8"
+
+x-mysql-template: &mysql-template
+  image: mysql:latest
+  env_file:
+    - .env.local
+  healthcheck:
+    test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+    interval: 20s
+    timeout: 10s
+    retries: 3
+
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.local
+    ports:
+      - "8081:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - private-subnet
+
+  mysql:
+    <<: *mysql-template
+    hostname: dev
+    container_name: mysql-dev
+    ports:
+      - "3306:3306"
+    networks:
+      - private-subnet
+
+networks:
+  private-subnet: # private: 172.19.0.x
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/24
