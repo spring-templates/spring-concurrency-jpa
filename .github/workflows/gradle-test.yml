@@ -7,17 +7,17 @@ on:
       - feature/**
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  setup:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: 'liberica'
           java-version: '21'
-
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
@@ -25,13 +25,20 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+  test:
+    needs: setup
+    runs-on: ${{ matrix.os }}
+    steps:
       - name: Run gradlew test
         run: ./gradlew test --warning-mode=all
 
+  coverage:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    steps:
       - name: Upload test coverage to Codecov.io
         uses: codecov/codecov-action@v4
         with:
