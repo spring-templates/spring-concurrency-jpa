@@ -7,7 +7,7 @@ COPY dumpJsa.gradle.kts .
 COPY gradlew .
 COPY gradle ./gradle
 RUN chmod +x ./gradlew
-RUN --mount=type=cache,target=/root/.gradle ./gradlew clean build
+RUN --mount=type=cache,target=/root/.gradle ./gradlew build
 
 # Stage 2: Run the application
 FROM bellsoft/liberica-openjre-alpine:21 as run

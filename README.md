@@ -1,5 +1,3 @@
-[![codecov](https://codecov.io/gh/spring-templates/spring-thread-jpa/graph/badge.svg?token=2SNS8SB5E0)](https://codecov.io/gh/spring-templates/spring-thread-jpa)
-
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?logo=springboot&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-ED8B00?logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-02303A?logo=gradle&logoColor=white)
@@ -7,6 +5,8 @@
 ![JaCoCo](https://img.shields.io/badge/JaCoCo-D22128?logo=jacoco&logoColor=white)
 ![Codecov](https://img.shields.io/badge/Codecov-F01F7A?logo=codecov&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
+
+
 
 # 관심사
 
