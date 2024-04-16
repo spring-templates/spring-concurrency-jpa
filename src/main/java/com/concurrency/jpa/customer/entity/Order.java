@@ -7,15 +7,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "ORDER")
+@Table(name = "order_table")
 public class Order {
     @Id
     @Column(name = "order_id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(255)")
     private Actors actor;
     private Long totalPrice;
     private Long totalCount;
+
     @OneToMany
+    @JoinColumn(name = "order_id")
     private List<ActualProduct> actualProducts = new ArrayList<>();
 }

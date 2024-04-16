@@ -9,18 +9,24 @@ import jakarta.persistence.*;
 public class ActualProduct {
     @Id
     @Column(name = "actual_product_id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", columnDefinition = "varchar(255)")
     private OrderStatus orderStatus;
 
     @ManyToOne(targetEntity = CoreProduct.class)
-    @JoinColumn(name = "core_product_id")
+    @JoinColumn(name = "core_product_id", nullable = false)
     private CoreProduct coreProduct;
+
+    @ManyToOne(targetEntity = Order.class)
+    @JoinColumn(name = "order_id")
+    private Order order;
 
     @Column(name = "order_price")
     private Long orderPrice;
 
-    @Column(name = "discount_rete")
+    @Column(name = "discount_rate")
     private float discountRate;
 }
