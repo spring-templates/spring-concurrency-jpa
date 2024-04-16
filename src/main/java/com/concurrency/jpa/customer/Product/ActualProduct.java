@@ -1,10 +1,17 @@
-package com.concurrency.jpa.customer.entity;
+package com.concurrency.jpa.customer.Product;
 
 
-import com.concurrency.jpa.customer.constant.OrderStatus;
+import com.concurrency.jpa.customer.order.Order;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "actual_product")
 public class ActualProduct {
     @Id
@@ -13,8 +20,8 @@ public class ActualProduct {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "order_status", columnDefinition = "varchar(255)")
-    private OrderStatus orderStatus;
+    @Column(name = "actual_status", columnDefinition = "varchar(255)")
+    private OrderStatus actualStatus;
 
     @ManyToOne(targetEntity = CoreProduct.class)
     @JoinColumn(name = "core_product_id", nullable = false)
@@ -24,8 +31,9 @@ public class ActualProduct {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @Column(name = "order_price")
-    private Long orderPrice;
+    @Getter
+    @Column(name = "actual_price")
+    private Long actualPrice;
 
     @Column(name = "discount_rate")
     private float discountRate;

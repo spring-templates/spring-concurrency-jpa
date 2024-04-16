@@ -24,10 +24,10 @@ CREATE TABLE IF NOT EXISTS `order_table` (
 );
 CREATE TABLE IF NOT EXISTS actual_product (
     actual_product_id BIGINT NOT NULL AUTO_INCREMENT,
-    order_status VARCHAR(255),
+    actual_status VARCHAR(255),
     core_product_id BIGINT NOT NULL,
     order_id BIGINT,
-    order_price BIGINT,
+    actual_price BIGINT,
     discount_rate FLOAT,
     PRIMARY KEY (actual_product_id),
     FOREIGN KEY (core_product_id) REFERENCES core_product(core_product_id),

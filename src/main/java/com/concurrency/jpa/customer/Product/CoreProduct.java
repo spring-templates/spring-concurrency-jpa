@@ -1,9 +1,15 @@
-package com.concurrency.jpa.customer.entity;
+package com.concurrency.jpa.customer.Product;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "core_product")
 public class CoreProduct {
     @Id

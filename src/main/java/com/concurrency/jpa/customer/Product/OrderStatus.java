@@ -1,4 +1,4 @@
-package com.concurrency.jpa.customer.constant;
+package com.concurrency.jpa.customer.Product;
 
 public enum OrderStatus {
     PENDING_ORDER,

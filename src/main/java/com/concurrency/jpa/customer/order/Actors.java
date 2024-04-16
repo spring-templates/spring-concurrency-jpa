@@ -1,4 +1,4 @@
-package com.concurrency.jpa.customer.constant;
+package com.concurrency.jpa.customer.order;
 
 public enum Actors {
     Guest(Integer.MAX_VALUE, Integer.MAX_VALUE),
