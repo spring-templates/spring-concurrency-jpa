@@ -19,18 +19,7 @@ jobs:
         with:
           distribution: 'liberica'
           java-version: ${{ matrix.java }}
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        env:
-          BASE_DIR: ${{ runner.os == 'Windows' && '~/Users/runner' || '~' }}
-        with:
-          path: |
-            ${{ env.BASE_DIR }}/.gradle/caches
-            ${{ env.BASE_DIR }}/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ matrix.java }}-${{ hashFiles('**/build.gradle.kts') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-${{ matrix.java }}-
+          cache: 'gradle'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
