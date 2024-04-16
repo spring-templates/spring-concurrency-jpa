@@ -25,7 +25,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run gradlew clean test on main
-        run: ./gradlew clean test --warning-mode=all
+        run: ./gradlew clean test
 
       - name: Upload test coverage to Codecov.io
         if: matrix.os == 'ubuntu-latest'
@@ -35,3 +35,4 @@ jobs:
           slug: ${{ github.repository }}
           fail_ci_if_error: true
           verbose: true
+          flags: 'integration'

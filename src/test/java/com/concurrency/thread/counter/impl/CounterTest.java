@@ -20,8 +20,9 @@ public final class CounterTest {
 
   private static Stream<Counter> counterProvider() {
     return Stream.of(new LockCounter(), new PollingCounter(),
-                     new SynchronizedCounter(), new AtomicCounter(),
-                     new CompletableFutureCounter());
+        new SynchronizedCounter(), new AtomicCounter(),
+        new CompletableFutureCounter()
+    );
   }
 
   /**

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.concurrency"
-version = "0.2.1-SNAPSHOT"
+version = "0.3.0-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
