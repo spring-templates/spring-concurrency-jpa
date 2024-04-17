@@ -1,4 +1,4 @@
-name: Run gradlew test
+name: Run gradlew test on Ubuntu and MacOS
 
 on:
   pull_request:
@@ -7,9 +7,8 @@ on:
       - feature/**
 
 jobs:
-  build:
+  build_and_test_ubuntu:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -17,14 +16,13 @@ jobs:
         with:
           distribution: 'liberica'
           java-version: '21'
+          cache: 'gradle'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          key: gradle-${{ hashFiles('**/*gradle*') }}
+          restore-keys: gradle-
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -36,7 +34,31 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: spring-templates/spring-concurrency-thread
+          slug: ${{ github.repository }}
           fail_ci_if_error: true
           verbose: true
           flags: ${{ github.ref == 'refs/pull/develop' && 'integration' || 'unittests' }}
+
+  build_and_test_macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'liberica'
+          java-version: '21'
+          cache: 'gradle'
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ hashFiles('**/*gradle*') }}
+          restore-keys: gradle-
+
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run gradlew test
+        run: ./gradlew test --warning-mode=all

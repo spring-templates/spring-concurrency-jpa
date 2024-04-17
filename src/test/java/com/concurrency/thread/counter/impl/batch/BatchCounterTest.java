@@ -28,7 +28,8 @@ class BatchCounterTest {
   public static Stream<Counter> batchCounterProvider() {
     return Stream.of(
         new AtomicBatchCounter(),
-        new ConcurrentParameterizedBatchingCounter());
+        new ConcurrentParameterizedBatchingCounter()
+    );
   }
 
   private static List<Integer> range() {
@@ -124,7 +125,8 @@ class BatchCounterTest {
       List<CompletableFuture<Void>> futures = iterPerThread.stream().map(
           number -> CompletableFuture.runAsync(
               () -> task.accept(number),
-              executor)).toList();
+              executor
+          )).toList();
       futures.forEach(CompletableFuture::join);
     }
     // then

@@ -11,6 +11,7 @@ public record Performance(
   public String toString() {
     return String.format(
         "| %-20s | %10d ms | %5d threads | %10d KB |",
-        name, time, threads, memory / CounterConfiguration.REQUEST_DIVIDER);
+        name, time, threads, memory / CounterConfiguration.REQUEST_DIVIDER
+    );
   }
 }

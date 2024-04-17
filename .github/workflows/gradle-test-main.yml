@@ -6,9 +6,8 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  build_test_and_coverage:
+    runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@v4
 
@@ -21,13 +20,13 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run gradlew clean test on main
-        run: ./gradlew clean test --warning-mode=all
+        run: ./gradlew clean test
 
       - name: Upload test coverage to Codecov.io
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: spring-templates/spring-concurrency-thread
-          flags: integration
+          slug: ${{ github.repository }}
           fail_ci_if_error: true
           verbose: true
+          flags: 'integration'
