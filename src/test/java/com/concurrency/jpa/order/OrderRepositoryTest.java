@@ -1,4 +1,4 @@
-package com.concurrency.jpa.product;
+package com.concurrency.jpa.order;
 
 import com.concurrency.jpa.customer.Product.ActualProduct;
 import com.concurrency.jpa.customer.Product.CoreProduct;
