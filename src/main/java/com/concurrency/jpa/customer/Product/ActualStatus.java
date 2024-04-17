@@ -1,9 +1,8 @@
 package com.concurrency.jpa.customer.Product;
 
-public enum OrderStatus {
+public enum ActualStatus {
     PENDING_ORDER,
-    PENDING_PAYMENT,
     PROCESSING,
-    SHIPPED,
+    SHIPPING,
     DELIVERED
 }

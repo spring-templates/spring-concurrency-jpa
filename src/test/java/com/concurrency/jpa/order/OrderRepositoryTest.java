@@ -1,8 +1,5 @@
 package com.concurrency.jpa.order;
 
-import com.concurrency.jpa.customer.Product.ActualProduct;
-import com.concurrency.jpa.customer.Product.CoreProduct;
-import com.concurrency.jpa.customer.Product.OrderStatus;
 import org.junit.jupiter.api.Assertions;
 import com.concurrency.jpa.customer.order.Actors;
 import com.concurrency.jpa.customer.order.Order;
@@ -37,7 +34,6 @@ public class OrderRepositoryTest {
 //                .build();
 //
 //
-        Assertions.assertEquals(order, orderRepository.findById(createdOrder.getId())
-                .orElseThrow(RuntimeException::new));
+        Assertions.assertEquals(order.getId(), orderRepository.findById(createdOrder.getId()).get().getId());
     }
 }

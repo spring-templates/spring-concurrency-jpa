@@ -21,7 +21,7 @@ public class ActualProduct {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "actual_status", columnDefinition = "varchar(255)")
-    private OrderStatus actualStatus;
+    private ActualStatus actualStatus;
 
     @ManyToOne(targetEntity = CoreProduct.class)
     @JoinColumn(name = "core_product_id", nullable = false)
