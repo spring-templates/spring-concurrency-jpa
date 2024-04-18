@@ -16,7 +16,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -34,7 +36,10 @@ public class OrderControllerTest {
 
     @Test
     void shouldReturnRequestData() throws Exception {
-        CreateOrderRequestDto createOrderRequestDto = new CreateOrderRequestDto(List.of(1,2), Actors.InexperiencedCustomer, PaymentMethods.CREDIT_CARD);
+        Map<Long, Long> coreProduct = new HashMap<>();
+        coreProduct.put((long) 1,(long) 10);
+        coreProduct.put((long)2, (long)5);
+        CreateOrderRequestDto createOrderRequestDto = new CreateOrderRequestDto(coreProduct, Actors.InexperiencedCustomer, PaymentMethods.CREDIT_CARD);
         String content = objectMapper.writeValueAsString(createOrderRequestDto);
         System.out.println(content);
         mockMvc.perform(post("/order/order")

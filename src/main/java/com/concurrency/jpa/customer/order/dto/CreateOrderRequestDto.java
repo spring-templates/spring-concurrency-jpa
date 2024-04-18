@@ -11,7 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -20,7 +22,7 @@ import java.util.List;
 public class CreateOrderRequestDto {
 
     @JsonProperty("core_products")
-    private List<Integer> coreProducts = new ArrayList<>();
+    private Map<Long, Long> coreProducts = new HashMap<>();
     @JsonProperty("client_type")
     private Actors clientType;
     @JsonProperty("payment_method")
