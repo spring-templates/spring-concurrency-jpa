@@ -1,4 +1,4 @@
-package com.concurrency.jpa.customer.Product;
+package com.concurrency.jpa.customer.Product.enums;
 
 public enum ActualStatus {
     PENDING_ORDER,

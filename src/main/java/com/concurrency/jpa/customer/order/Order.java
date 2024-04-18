@@ -1,6 +1,7 @@
 package com.concurrency.jpa.customer.order;
 
 import com.concurrency.jpa.customer.Product.ActualProduct;
+import com.concurrency.jpa.customer.order.enums.Actors;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,6 +1,7 @@
 package com.concurrency.jpa.customer.Product;
 
 
+import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.order.Order;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
