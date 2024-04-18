@@ -1,8 +1,9 @@
-package com.concurrency.jpa.customer.Product;
+package com.concurrency.jpa.customer.Product.entity;
 
 
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.order.Order;
+import com.concurrency.jpa.customer.order.dto.ActualProductDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,4 +39,18 @@ public class ActualProduct {
 
     @Column(name = "discount_rate")
     private float discountRate;
+
+    public void updateActualProductStatus(ActualStatus actualStatus){
+        this.actualStatus = actualStatus;
+    }
+
+    public ActualProductDto toDto(){
+        return ActualProductDto.builder()
+                .actualProductId(id)
+                .actualStatus(actualStatus)
+                .coreProductId(coreProduct.getId())
+                .actualPrice(actualPrice)
+                .discountRate(discountRate)
+                .build();
+    }
 }

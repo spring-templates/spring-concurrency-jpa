@@ -1,6 +1,7 @@
 package com.concurrency.jpa.customer.order;
 
-import com.concurrency.jpa.customer.Product.ActualProduct;
+import com.concurrency.jpa.customer.Product.entity.ActualProduct;
+import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @NoArgsConstructor
@@ -37,5 +39,24 @@ public class Order {
         actualProducts.add(actualProduct);
         totalCount++;
         totalPrice += actualProduct.getActualPrice();
+    }
+
+    public void addActualProducts(List<ActualProduct> actualProducts){
+        actualProducts.forEach(a -> {
+            actualProducts.add(a);
+            totalCount++;
+            totalPrice += a.getActualPrice();
+        });
+    }
+
+    public OrderDto toDto(){
+        return OrderDto.builder()
+                .id(id)
+                .actualProducts(actualProducts.stream()
+                        .map(ActualProduct::toDto)
+                        .collect(Collectors.toList()))
+                .clientType(actor)
+                .totalPrice(totalPrice)
+                .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.concurrency.jpa.customer.order.dto;
 
+import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import com.concurrency.jpa.customer.order.enums.PaymentMethods;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,8 +29,11 @@ public class CreateOrderRequestDto {
     @JsonProperty("payment_method")
     private PaymentMethods paymentMethod;
 
-    @Override
-    public String toString(){
-        return clientType.name() +" "+paymentMethod.name();
+    public Order of(){
+        return Order.builder()
+                .actor(clientType)
+                .totalPrice((long) 0)
+                .totalCount((long) 0)
+                .build();
     }
 }

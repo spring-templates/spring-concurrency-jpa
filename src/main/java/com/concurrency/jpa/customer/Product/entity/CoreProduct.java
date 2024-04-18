@@ -1,8 +1,9 @@
-package com.concurrency.jpa.customer.Product;
+package com.concurrency.jpa.customer.Product.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "core_product")
 public class CoreProduct {
     @Id
+    @Getter
     @Column(name = "core_product_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
