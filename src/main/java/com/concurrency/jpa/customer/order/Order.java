@@ -1,6 +1,7 @@
 package com.concurrency.jpa.customer.order;
 
 import com.concurrency.jpa.customer.Product.entity.ActualProduct;
+import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import jakarta.persistence.*;
@@ -38,6 +39,7 @@ public class Order {
     public void addActualProducts(List<ActualProduct> actualProducts){
         List<ActualProduct> newActualProducts = new ArrayList<>(actualProducts);
         newActualProducts.forEach(a -> {
+            a.updateActualProductStatus(ActualStatus.PROCESSING);
             this.actualProducts.add(a);
             this.totalPrice += a.getActualPrice();
         });

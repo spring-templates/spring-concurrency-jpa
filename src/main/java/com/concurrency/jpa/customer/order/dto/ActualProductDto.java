@@ -14,7 +14,6 @@ public class ActualProductDto {
     private Long actualProductId;
     private ActualStatus actualStatus;
     private Long coreProductId;
-    private Long orderId;
     private Long actualPrice;
     private float discountRate;
 }

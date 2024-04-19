@@ -5,10 +5,7 @@ import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.dto.ActualProductDto;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
@@ -17,6 +14,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "actual_product")
 public class ActualProduct {
     @Id
+    @Getter
     @Column(name = "actual_product_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,7 +28,7 @@ public class ActualProduct {
     private CoreProduct coreProduct;
 
     @ManyToOne
-    @Getter
+    @Setter
     @JoinColumn(name = "order_id")
     private Order order;
 
@@ -53,5 +51,9 @@ public class ActualProduct {
                 .actualPrice(actualPrice)
                 .discountRate(discountRate)
                 .build();
+    }
+
+    public Long getCoreProductId(){
+        return coreProduct.getId();
     }
 }

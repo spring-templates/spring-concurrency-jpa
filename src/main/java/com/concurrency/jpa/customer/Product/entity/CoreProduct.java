@@ -19,7 +19,12 @@ public class CoreProduct {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long price;
+    @Getter
     private Long stock;
     @Column(name = "seller_id")
     private Long sellerId;
+
+    public void updateStrock(Long change){
+        stock += change;
+    }
 }
