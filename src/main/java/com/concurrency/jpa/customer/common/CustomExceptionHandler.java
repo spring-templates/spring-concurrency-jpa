@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class CustomExceptionHandler {
     @ExceptionHandler(value = {RuntimeException.class, NullPointerException.class})
     public BaseResponse<Void> handlerException(RuntimeException e, HttpServletRequest request){
+        e.printStackTrace();
         return new BaseResponse<>(e);
     }
 }

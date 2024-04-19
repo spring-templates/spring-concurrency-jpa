@@ -25,11 +25,12 @@ public class ActualProduct {
     @Column(name = "actual_status", columnDefinition = "varchar(255)")
     private ActualStatus actualStatus;
 
-    @ManyToOne(targetEntity = CoreProduct.class)
+    @ManyToOne
     @JoinColumn(name = "core_product_id", nullable = false)
     private CoreProduct coreProduct;
 
-    @ManyToOne(targetEntity = Order.class)
+    @ManyToOne
+    @Getter
     @JoinColumn(name = "order_id")
     private Order order;
 

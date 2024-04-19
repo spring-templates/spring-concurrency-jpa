@@ -39,16 +39,18 @@ public class OrderServiceImpl implements OrderService {
         // 유형제품 찾기
         List<ActualProduct> actualProducts = new ArrayList<>();
         createOrderRequestDto.getCoreProducts().forEach((coreProductId, value) ->
-                actualProducts.addAll(actualProductRepository.findByCoreProductIdAndActualStatus(coreProductId, ActualStatus.PENDING_ORDER,
+                actualProducts.addAll(actualProductRepository.findByCoreProductIdAndActualStatus(
+                        coreProductId,
+                        ActualStatus.PENDING_ORDER,
                         PageRequest.of(0, Math.toIntExact(value)))));
-        System.out.println(actualProducts.size());
         // 주문 생성
-        Order order = createOrderRequestDto.of();
-        order.addActualProducts(actualProducts);
-
+        Order order = createOrderRequestDto.toEntity();
+        Order savedOrder = orderRepository.save(order);
+        // 주문과 유형제품 연결
+        savedOrder.addActualProducts(actualProducts);
         // 유형제품 상태 업데이트
         updateProductsStatus(actualProducts, ActualStatus.PROCESSING);
-        return order.toDto();
+        return savedOrder.toDto();
     }
 
     /**

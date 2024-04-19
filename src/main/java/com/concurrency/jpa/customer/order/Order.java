@@ -28,24 +28,18 @@ public class Order {
     @Column(columnDefinition = "varchar(255)")
     private Actors actor;
     private Long totalPrice;
-    private Long totalCount;
 
+    @Getter
     @OneToMany
     @JoinColumn(name = "order_id")
     private List<ActualProduct> actualProducts = new ArrayList<>();
 
     // 연관관계 메서드
-    public void addActualProduct(ActualProduct actualProduct){
-        actualProducts.add(actualProduct);
-        totalCount++;
-        totalPrice += actualProduct.getActualPrice();
-    }
-
     public void addActualProducts(List<ActualProduct> actualProducts){
-        actualProducts.forEach(a -> {
-            actualProducts.add(a);
-            totalCount++;
-            totalPrice += a.getActualPrice();
+        List<ActualProduct> newActualProducts = new ArrayList<>(actualProducts);
+        newActualProducts.forEach(a -> {
+            this.actualProducts.add(a);
+            this.totalPrice += a.getActualPrice();
         });
     }
 

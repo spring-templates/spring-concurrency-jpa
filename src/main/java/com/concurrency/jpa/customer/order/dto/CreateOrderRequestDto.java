@@ -29,11 +29,11 @@ public class CreateOrderRequestDto {
     @JsonProperty("payment_method")
     private PaymentMethods paymentMethod;
 
-    public Order of(){
+    public Order toEntity(){
         return Order.builder()
                 .actor(clientType)
                 .totalPrice((long) 0)
-                .totalCount((long) 0)
+                .actualProducts(new ArrayList<>())
                 .build();
     }
 }

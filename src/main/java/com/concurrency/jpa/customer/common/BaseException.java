@@ -9,7 +9,7 @@ public class BaseException  extends RuntimeException{
 
     public BaseException(BaseResponseStatus status) {
         super(status.getMessage());
-//        this.printStackTrace();
+        this.printStackTrace();
         this.status = status;
     }
 
