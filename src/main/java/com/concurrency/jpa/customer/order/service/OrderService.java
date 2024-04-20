@@ -6,6 +6,6 @@ import com.concurrency.jpa.customer.order.dto.OrderDto;
 import java.util.Map;
 
 public interface OrderService {
-    void updateCoreProducts(Map<Long, Long> requireProducts);
+    void updateCoreProductsStock(Map<Long, Long> requireProducts);
     OrderDto createOrder(CreateOrderRequestDto createOrderRequestDto);
 }

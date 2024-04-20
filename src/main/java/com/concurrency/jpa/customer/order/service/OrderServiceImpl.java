@@ -3,7 +3,6 @@ package com.concurrency.jpa.customer.order.service;
 
 import com.concurrency.jpa.customer.Product.ActualProductRepository;
 import com.concurrency.jpa.customer.Product.CoreProductRepository;
-import com.concurrency.jpa.customer.Product.dto.StockDto;
 import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -39,23 +37,43 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto createOrder(CreateOrderRequestDto createOrderRequestDto){
         // 재고 확인하고 감소시키기
-        updateCoreProducts(createOrderRequestDto.getCoreProducts());
+        updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
         // 유형제품 찾기
-        List<ActualProduct> actualProducts = new ArrayList<>();
-        createOrderRequestDto.getCoreProducts()
-                .forEach((coreProductId, value) ->
-                        actualProducts.addAll(actualProductRepository.findByCoreProductIdAndActualStatus(
-                                coreProductId,
-                                ActualStatus.PENDING_ORDER,
-                                PageRequest.of(0, Math.toIntExact(value)))));
-        // 주문 생성
-        Order order = createOrderRequestDto.toEntity();
-        Order savedOrder = orderRepository.save(order);
-        // 주문과 유형제품 연결 & 유형제품 상태 업데이트
-        savedOrder.addActualProducts(actualProducts);
 
+        List<ActualProduct> actualProducts = concatActualProductList(createOrderRequestDto.getCoreProducts());
+        // 주문 생성
+        // 주문과 유형제품 연결 & 유형제품 상태 업데이트
+        Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
 
         return savedOrder.toDto();
+    }
+
+    @Transactional
+    public Order getOrder(CreateOrderRequestDto createOrderRequestDto, List<ActualProduct> actualProducts) {
+        Order order = createOrderRequestDto.toEntity();
+        order.addActualProducts(actualProducts);
+        return orderRepository.save(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActualProduct> concatActualProductList(Map<Long, Long> coreProducts) {
+        List<ActualProduct> actualProducts = new ArrayList<>();
+        coreProducts.forEach((coreProductId, stock) ->
+                        actualProducts.addAll(
+                                findActualProducts(
+                                        coreProductId,
+                                        ActualStatus.PENDING_ORDER,
+                                        stock))
+        );
+        return actualProducts;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock){
+        return actualProductRepository.findByCoreProductIdAndActualStatus(
+                coreProductId,
+                actualStatus,
+                PageRequest.of(0, Math.toIntExact(stock)));
     }
 
     /**
@@ -63,14 +81,21 @@ public class OrderServiceImpl implements OrderService {
      * @param requireProducts
      */
     @Transactional
-    public void updateCoreProducts(Map<Long, Long> requireProducts) {
-        requireProducts.forEach((k,v) -> {
-            CoreProduct coreProduct = coreProductRepository.findById(k)
-                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-            if(v > coreProduct.getStock()){
-                throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
-            }
-            coreProduct.updateStrock(-v);
+    public void updateCoreProductsStock(Map<Long, Long> requireProducts) {
+        requireProducts.forEach((coreProductId, stock) -> {
+            System.out.println("필요한 재고 : "+stock);
+            subtractCoreProductStock(coreProductId, stock);
         });
+    }
+
+    @Transactional
+    public void subtractCoreProductStock(Long coreProductId, Long reqStock){
+        CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        System.out.println("현재 재고 : "+coreProduct.getStock());
+        if(reqStock > coreProduct.getStock()){
+            throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
+        }
+        coreProduct.addStrock(-reqStock);
     }
 }
