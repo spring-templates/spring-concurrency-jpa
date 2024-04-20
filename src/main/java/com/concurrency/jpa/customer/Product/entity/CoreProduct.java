@@ -24,7 +24,8 @@ public class CoreProduct {
     @Column(name = "seller_id")
     private Long sellerId;
 
-    public void addStrock(Long change){
+    public long addStrock(Long change){
         stock += change;
+        return stock;
     }
 }

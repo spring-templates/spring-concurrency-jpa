@@ -6,5 +6,5 @@ import lombok.Value;
 @Value
 @Getter
 public class StockDto {
-    private final Long stock;
+    Long stock;
 }

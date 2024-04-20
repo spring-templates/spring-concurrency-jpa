@@ -34,12 +34,12 @@ public class OrderServiceImpl implements OrderService {
     private final CoreProductRepository coreProductRepository;
 
 
+    @Override
     @Transactional
     public OrderDto createOrder(CreateOrderRequestDto createOrderRequestDto){
         // 재고 확인하고 감소시키기
         updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
         // 유형제품 찾기
-
         List<ActualProduct> actualProducts = concatActualProductList(createOrderRequestDto.getCoreProducts());
         // 주문 생성
         // 주문과 유형제품 연결 & 유형제품 상태 업데이트
@@ -48,6 +48,7 @@ public class OrderServiceImpl implements OrderService {
         return savedOrder.toDto();
     }
 
+    @Override
     @Transactional
     public Order getOrder(CreateOrderRequestDto createOrderRequestDto, List<ActualProduct> actualProducts) {
         Order order = createOrderRequestDto.toEntity();
@@ -55,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(order);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<ActualProduct> concatActualProductList(Map<Long, Long> coreProducts) {
         List<ActualProduct> actualProducts = new ArrayList<>();
@@ -68,6 +70,7 @@ public class OrderServiceImpl implements OrderService {
         return actualProducts;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock){
         return actualProductRepository.findByCoreProductIdAndActualStatus(
@@ -80,22 +83,20 @@ public class OrderServiceImpl implements OrderService {
      * 요청한 상품의 유형제고가 충분한지 확인
      * @param requireProducts
      */
+    @Override
     @Transactional
     public void updateCoreProductsStock(Map<Long, Long> requireProducts) {
-        requireProducts.forEach((coreProductId, stock) -> {
-            System.out.println("필요한 재고 : "+stock);
-            subtractCoreProductStock(coreProductId, stock);
-        });
+        requireProducts.forEach(this::subtractCoreProductStock);
     }
 
+    @Override
     @Transactional
-    public void subtractCoreProductStock(Long coreProductId, Long reqStock){
+    public long subtractCoreProductStock(Long coreProductId, Long reqStock){
         CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        System.out.println("현재 재고 : "+coreProduct.getStock());
         if(reqStock > coreProduct.getStock()){
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
-        coreProduct.addStrock(-reqStock);
+        return coreProduct.addStrock(-reqStock);
     }
 }

@@ -11,8 +11,5 @@ import java.util.Map;
 
 @SpringBootTest
 public class ProductServiceTest {
-    @Autowired
-    OrderService orderService;
-
 
 }
