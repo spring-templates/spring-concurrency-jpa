@@ -10,7 +10,9 @@ public enum BaseResponseStatus {
 
     SUCCESS(true, HttpStatus.OK, "요청에 성공하였습니다."),
     FAIL(false, HttpStatus.BAD_REQUEST, "요청에 실패했습니다."),
-    NOT_ENOUGH_STOCK(false, HttpStatus.BAD_REQUEST, "재고가 충분하지 않습니다.");
+    NOT_ENOUGH_STOCK(false, HttpStatus.BAD_REQUEST, "재고가 충분하지 않습니다."),
+    PRODUCT_NOT_FOUND(false, HttpStatus.NOT_FOUND, "요청한 상품이 없습니다."),
+    NOT_AUTHORITY(false, HttpStatus.FORBIDDEN, "상품 주문 권한이 없습니다.");
 
     private final boolean isSuccess;
     private final HttpStatus code;

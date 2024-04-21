@@ -21,19 +21,6 @@ public class OrderRepositoryTest {
                 .actor(Actors.Guest)
                 .build();
         Order createdOrder = orderRepository.save(order);
-//        CoreProduct cp1 = CoreProduct.builder()
-//                .price((long) 100000)
-//                .stock((long) 100)
-//                .sellerId((long) 1)
-//                .build();
-//        ActualProduct ap1 = ActualProduct.builder()
-//                .actualStatus(OrderStatus.PENDING_ORDER)
-//                .actualPrice((long) 99900)
-//                .discountRate(10)
-//                .coreProduct(cp1)
-//                .build();
-//
-//
         Assertions.assertEquals(order.getId(), orderRepository.findById(createdOrder.getId()).get().getId());
     }
 }

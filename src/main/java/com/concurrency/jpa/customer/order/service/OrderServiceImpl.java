@@ -12,6 +12,7 @@ import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
+import com.concurrency.jpa.customer.order.enums.Actors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +38,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDto createOrder(CreateOrderRequestDto createOrderRequestDto){
+        // 유저 권한 확인하기
+        checkUserAuthority(createOrderRequestDto.getClientType());
         // 재고 확인하고 감소시키기
         updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
         // 유형제품 찾기
@@ -44,8 +47,13 @@ public class OrderServiceImpl implements OrderService {
         // 주문 생성
         // 주문과 유형제품 연결 & 유형제품 상태 업데이트
         Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
-
         return savedOrder.toDto();
+    }
+
+    private void checkUserAuthority(Actors clientType) {
+        if(clientType.equals(Actors.Guest)){
+            throw new BaseException(BaseResponseStatus.NOT_AUTHORITY);
+        }
     }
 
     @Override
@@ -97,6 +105,8 @@ public class OrderServiceImpl implements OrderService {
         if(reqStock > coreProduct.getStock()){
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
-        return coreProduct.addStrock(-reqStock);
+        Long result =  coreProduct.addStrock(-reqStock);
+        System.out.println("결과 재고 : "+result);
+        return result;
     }
 }
