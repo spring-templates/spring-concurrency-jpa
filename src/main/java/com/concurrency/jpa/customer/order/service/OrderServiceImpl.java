@@ -15,6 +15,7 @@ import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -117,5 +118,28 @@ public class OrderServiceImpl implements OrderService {
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
         return coreProduct.addStrock(-reqStock);
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public long subtractCoreProductStockOptimistic(Long coreProductId, Long reqStock) throws InterruptedException {
+        int patience = 0;
+        while(true){
+            try{
+                CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
+                        .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+                if(reqStock > coreProduct.getStock()){
+                    throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
+                }
+                return coreProduct.addStrock(-reqStock);
+            }
+            catch(Exception oe){
+                if(patience == 10){
+                    throw new BaseException(BaseResponseStatus.OPTIMISTIC_FAILURE);
+                }
+                System.out.println("현재까지 "+patience+"번 참음");
+                patience++;
+                Thread.sleep(500);
+            }
+        }
     }
 }
