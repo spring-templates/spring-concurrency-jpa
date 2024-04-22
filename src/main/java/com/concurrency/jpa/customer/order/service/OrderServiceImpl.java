@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -98,15 +99,23 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public long subtractCoreProductStock(Long coreProductId, Long reqStock){
         CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         if(reqStock > coreProduct.getStock()){
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
-        Long result =  coreProduct.addStrock(-reqStock);
-        System.out.println("결과 재고 : "+result);
-        return result;
+        return coreProduct.addStrock(-reqStock);
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public long subtractCoreProductStockPessimistic(Long coreProductId, Long reqStock){
+        CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        if(reqStock > coreProduct.getStock()){
+            throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
+        }
+        return coreProduct.addStrock(-reqStock);
     }
 }

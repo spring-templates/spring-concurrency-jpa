@@ -19,6 +19,8 @@ public class CoreProduct {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long price;
+    @Version
+    private Long version;
     @Getter
     private Long stock;
     @Column(name = "seller_id")

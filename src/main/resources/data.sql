@@ -1,8 +1,8 @@
-INSERT INTO customer(email_id, email_provider, first_name, last_name)
-VALUES ('user', 'example.com', 'First', 'Last');
-
 INSERT INTO core_product( price, seller_id, stock)
 VALUES (1000, 1, 64);
+INSERT INTO customer(email_id, email_provider, first_name, last_name)
+
+VALUES ('user', 'example.com', 'First', 'Last');
 
 INSERT INTO core_product( price, seller_id, stock)
 VALUES (5000, 1, 2);
