@@ -19,7 +19,9 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 public class OrderController {
+    @Autowired
     OrderService orderService;
+    @Autowired
     PaymentService paymentService;
 
     @PostMapping("/order")
@@ -27,15 +29,16 @@ public class OrderController {
 
         PaymentInitialRequestDto paymentRequest = orderService.createOrder(createOrderRequestDto);
         PaymentStatusDto payPending= paymentService.pay(paymentRequest);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(URI.create("/payment/confirm"));
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setLocation(URI.create("/payment/confirm"));
         // baseResponse에 header 추가
-        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
-                .headers(headers)
-                .build();
+//        return ResponseEntity.status(HttpStatus.PERMANENT_REDIRECT)
+//                .headers(headers)
+//                .body(payPending);
+        return ResponseEntity.ok().body(payPending);
     }
 
-    @GetMapping("/confirm")
+    @PutMapping("/confirm")
     public ResponseEntity<?> redirect() {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(URI.create("/"));

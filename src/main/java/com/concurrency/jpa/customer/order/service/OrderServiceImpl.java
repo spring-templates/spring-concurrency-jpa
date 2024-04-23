@@ -30,8 +30,11 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
+    @Autowired
     private final OrderRepository orderRepository;
+    @Autowired
     private final ActualProductRepository actualProductRepository;
+    @Autowired
     private final CoreProductRepository coreProductRepository;
 
 

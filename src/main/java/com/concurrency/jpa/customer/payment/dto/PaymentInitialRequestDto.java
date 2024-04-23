@@ -13,10 +13,10 @@ public record PaymentInitialRequestDto(
     URI redirect
 ) {
     public PaymentInitialRequestDto(OrderDto orderDto){
-        this(new CustomerRequestDto("abcSeller@gmail.com", "sol"),
-            new CustomerRequestDto("abcBuyer@naver.com", "chan"),
+        this(new CustomerRequestDto("abcSeller@gmail.com", "sol sol"),
+            new CustomerRequestDto("abcBuyer@naver.com", "oh sol"),
             AbstractPayment.valueOf(orderDto.getPaymentMethod().toString()),
             orderDto.getTotalPrice(),
-            URI.create("http://localhost:8080/payments/confirm"));
+            URI.create("http://localhost:8080/payment/confirm"));
     }
 }

@@ -23,6 +23,10 @@ repositories {
 }
 
 @Suppress("SpellCheckingInspection") dependencies {
+    // spring-web-payment
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0")
+
     // spring-web-jpa-concurrency
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
