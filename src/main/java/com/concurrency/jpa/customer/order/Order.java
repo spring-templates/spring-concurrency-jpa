@@ -29,6 +29,7 @@ public class Order {
     @Column(columnDefinition = "varchar(255)")
     private Actors actor;
     private Long totalPrice;
+    private Long paymentId;
 
     @Getter
     @OneToMany
@@ -53,6 +54,7 @@ public class Order {
                         .collect(Collectors.toList()))
                 .clientType(actor)
                 .totalPrice(totalPrice)
+                .paymentId(paymentId)
                 .build();
     }
 }

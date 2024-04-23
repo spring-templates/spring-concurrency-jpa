@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -18,6 +19,8 @@ public class BaseResponse<T> extends ResponseEntity<T> {
 //    private final HttpStatus code;
     @JsonInclude(JsonInclude.Include.NON_NULL) // json을 만들 때 null인 객체는 제외한다.
     private T result;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private HttpHeaders headers;
 
     public BaseResponse(T result) {
         super(BaseResponseStatus.SUCCESS.getCode());
@@ -25,6 +28,14 @@ public class BaseResponse<T> extends ResponseEntity<T> {
         this.isSuccess = BaseResponseStatus.SUCCESS.isSuccess();
         this.message = BaseResponseStatus.SUCCESS.getMessage();
         this.result = result;
+    }
+    public BaseResponse(T result, HttpHeaders headers) {
+        super(headers, BaseResponseStatus.SUCCESS.getCode());
+        // 응답에 성공하고 컨텐츠가 있는 경우, create, update, read 경우
+        this.isSuccess = BaseResponseStatus.SUCCESS.isSuccess();
+        this.message = BaseResponseStatus.SUCCESS.getMessage();
+        this.result = result;
+        this.headers = headers;
     }
 
     public BaseResponse(BaseResponseStatus status) {

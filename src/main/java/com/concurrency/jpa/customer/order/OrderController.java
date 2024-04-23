@@ -15,7 +15,6 @@ import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/order")
 public class OrderController {
 
     @Autowired
@@ -23,10 +22,17 @@ public class OrderController {
 
     @PostMapping("/order")
     public ResponseEntity<?> postOrder(@RequestBody CreateOrderRequestDto createOrderRequestDto) {
-        return ResponseEntity.ok(orderService.createOrder(createOrderRequestDto));
+
+        OrderDto orderDto = orderService.createOrder(createOrderRequestDto);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create("/confirm"));
+        // baseResponse에 header 추가
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                .headers(headers)
+                .body(orderDto);
     }
 
-    @GetMapping("/redirect")
+    @GetMapping("/confirm")
     public ResponseEntity<?> redirect() {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(URI.create("/"));
