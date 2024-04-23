@@ -99,6 +99,8 @@ public class OrderServiceImpl implements OrderService {
         requireProducts.forEach(this::subtractCoreProductStock);
     }
 
+    ///////////////////////// 재고를 감소시키는 여러 구현들
+
     @Override
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public long subtractCoreProductStock(Long coreProductId, Long reqStock){
