@@ -4,6 +4,7 @@ import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.order.enums.PaymentMethods;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,7 +31,7 @@ public class Order {
     private Actors actor;
     private Long totalPrice;
     private Long paymentId;
-
+    private PaymentMethods paymentMethod;
     @Getter
     @OneToMany
     @JoinColumn(name = "order_id")
@@ -54,6 +55,7 @@ public class Order {
                         .collect(Collectors.toList()))
                 .clientType(actor)
                 .totalPrice(totalPrice)
+                .paymentMethod(paymentMethod)
                 .paymentId(paymentId)
                 .build();
     }

@@ -13,6 +13,7 @@ import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -29,17 +30,14 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
-    @Autowired
     private final OrderRepository orderRepository;
-    @Autowired
     private final ActualProductRepository actualProductRepository;
-    @Autowired
     private final CoreProductRepository coreProductRepository;
 
 
     @Override
     @Transactional
-    public OrderDto createOrder(CreateOrderRequestDto createOrderRequestDto){
+    public PaymentInitialRequestDto createOrder(CreateOrderRequestDto createOrderRequestDto){
         // 유저 권한 확인하기
         checkUserAuthority(createOrderRequestDto.getClientType());
         // 재고 확인하고 감소시키기
@@ -49,7 +47,7 @@ public class OrderServiceImpl implements OrderService {
         // 주문 생성
         // 주문과 유형제품 연결 & 유형제품 상태 업데이트
         Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
-        return savedOrder.toDto();
+        return new PaymentInitialRequestDto(savedOrder.toDto());
     }
 
     private void checkUserAuthority(Actors clientType) {

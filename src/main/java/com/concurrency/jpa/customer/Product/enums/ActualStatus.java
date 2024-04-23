@@ -4,5 +4,6 @@ public enum ActualStatus {
     PENDING_ORDER,
     PROCESSING,
     SHIPPING,
-    DELIVERED
+    DELIVERED,
+    FAILED
 }

@@ -23,6 +23,7 @@ public class OrderDto {
     private Actors clientType;
     private Long totalPrice;
     private Long paymentId;
+    private PaymentMethods paymentMethod;
 //    @JsonProperty("payment_method")
 //    private PaymentMethods paymentMethod;
 }

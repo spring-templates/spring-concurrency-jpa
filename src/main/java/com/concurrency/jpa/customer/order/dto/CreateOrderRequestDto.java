@@ -32,6 +32,7 @@ public class CreateOrderRequestDto {
     public Order toEntity(){
         return Order.builder()
                 .actor(clientType)
+                .paymentMethod(paymentMethod)
                 .totalPrice((long) 0)
                 .actualProducts(new ArrayList<>())
                 .build();
