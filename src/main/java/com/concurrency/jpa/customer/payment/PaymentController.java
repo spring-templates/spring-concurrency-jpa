@@ -20,4 +20,12 @@ public class PaymentController {
         PaymentStatusDto result = paymentService.confirm(dto);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/result")
+    public ResponseEntity<?> result(@RequestBody PaymentStatusDto dto){
+//        PaymentStatusDto result = paymentService.confirm(dto);
+//        return ResponseEntity.ok(result);
+        System.out.println("클라이언트에게 결제 결과 보여주는 로직 "+dto);
+        return null;
+    }
 }

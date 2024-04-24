@@ -29,13 +29,13 @@ public class OrderController {
 
         PaymentInitialRequestDto paymentRequest = orderService.createOrder(createOrderRequestDto);
         PaymentStatusDto payPending= paymentService.pay(paymentRequest);
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setLocation(URI.create("/payment/confirm"));
-        // baseResponse에 header 추가
-//        return ResponseEntity.status(HttpStatus.PERMANENT_REDIRECT)
-//                .headers(headers)
-//                .body(payPending);
-        return ResponseEntity.ok().body(payPending);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create("/payment/result"));
+//         baseResponse에 header 추가
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                .headers(headers)
+                .body(payPending);
+//        return ResponseEntity.ok().body(payPending);
     }
 
     @PutMapping("/confirm")

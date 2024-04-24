@@ -1,10 +1,14 @@
 package com.concurrency.jpa.customer.payment.service;
 
+import com.concurrency.jpa.customer.common.BaseException;
+import com.concurrency.jpa.customer.common.BaseResponse;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,12 +38,31 @@ public class PaymentServiceImpl implements PaymentService{
 
     @Override
     public PaymentStatusDto confirm(PaymentStatusDto dto) {
-        System.out.println("결과 확인 로직!!!!");
-        return null;
+        Mono<PaymentStatusDto> mono = WebClient.create()
+                .put()
+                .uri(getUri("/confirm"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(PaymentStatusDto.class)
+                .onErrorResume(e -> {
+                    if (e instanceof WebClientResponseException) {
+                        var responseException = (WebClientResponseException) e;
+                        if (responseException.getStatusCode().is4xxClientError()) {
+                            cancel(dto);
+                            System.out.println(e.getMessage());
+                        }
+                    }
+                    return Mono.error(e);
+                });
+        PaymentStatusDto result = mono.block();
+        System.out.println("결제 결과 : "+result);
+        return result;
     }
 
     @Override
     public PaymentStatusDto cancel(PaymentStatusDto dto) {
+        System.out.println("결제 취소");
         return null;
     }
 }
