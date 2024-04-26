@@ -15,8 +15,8 @@ public class CustomExceptionHandler {
     }
 
     @ExceptionHandler(value = {RuntimeException.class})
-    public ResponseEntity<?> runtimeHandlerException( BaseException b){
+    public ResponseEntity<?> runtimeHandlerException( RuntimeException b){
         b.printStackTrace();
-        return ResponseEntity.badRequest().body(new BaseResponse<>(b));
+        return ResponseEntity.badRequest().body(b.getMessage());
     }
 }

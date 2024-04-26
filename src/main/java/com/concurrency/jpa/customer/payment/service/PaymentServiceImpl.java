@@ -38,26 +38,26 @@ public class PaymentServiceImpl implements PaymentService{
 
     @Override
     public PaymentStatusDto confirm(PaymentStatusDto dto) {
-        Mono<PaymentStatusDto> mono = WebClient.create()
-                .put()
-                .uri(getUri("/confirm"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(dto)
-                .retrieve()
-                .bodyToMono(PaymentStatusDto.class)
-                .onErrorResume(e -> {
-                    if (e instanceof WebClientResponseException) {
-                        var responseException = (WebClientResponseException) e;
-                        if (responseException.getStatusCode().is4xxClientError()) {
-                            cancel(dto);
-                            System.out.println(e.getMessage());
-                        }
-                    }
-                    return Mono.error(e);
-                });
-        PaymentStatusDto result = mono.block();
-        System.out.println("결제 결과 : "+result);
-        return result;
+//        Mono<PaymentStatusDto> mono = WebClient.create()
+//                .put()
+//                .uri(getUri("/confirm"))
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .bodyValue(dto)
+//                .retrieve()
+//                .bodyToMono(PaymentStatusDto.class)
+//                .onErrorResume(e -> {
+//                    if (e instanceof WebClientResponseException) {
+//                        var responseException = (WebClientResponseException) e;
+//                        if (responseException.getStatusCode().is4xxClientError()) {
+//                            cancel(dto);
+//                            System.out.println(e.getMessage());
+//                        }
+//                    }
+//                    return Mono.error(e);
+//                });
+//        PaymentStatusDto result = mono.block();
+        System.out.println("결제 결과 : "+dto);
+        return dto;
     }
 
     @Override
