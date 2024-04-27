@@ -7,7 +7,7 @@
 
 # Core configuration
 spring.application.name: spring-web-jpa-concurrency
-spring.profiles.active: default, dev  , init-sql
+spring.profiles.active: default, dev , init-sql
 
 # Database configuration
 spring.datasource:

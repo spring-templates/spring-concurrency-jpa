@@ -1,30 +1,37 @@
 package com.concurrency.jpa.customer.payment.service;
 
+import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.common.BaseException;
-import com.concurrency.jpa.customer.common.BaseResponse;
+import com.concurrency.jpa.customer.common.BaseResponseStatus;
+import com.concurrency.jpa.customer.order.Order;
+import com.concurrency.jpa.customer.order.OrderRepository;
+import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
+import com.concurrency.jpa.customer.payment.dto.PaymentStatus;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import java.net.URI;
 
 /**
  * 외부 결제 서버에 결제 요청, 결과 확인, 결제 취소를 요청하는 부분
  */
 @Service
+@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService{
-    private static final String paymentURI = "http://localhost:8082/payments";
+    private static final String paymentURI = "http://localhost:8080";
+    @Autowired
+    private final OrderRepository orderRepository;
     @Override
     public PaymentStatusDto pay(PaymentInitialRequestDto dto) {
         Mono<PaymentStatusDto> mono = WebClient.create()
                 .post()
-                .uri(getUri(""))
+                .uri(getUri("/mock/payments"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(dto)
                 .retrieve()
@@ -36,33 +43,77 @@ public class PaymentServiceImpl implements PaymentService{
         return URI.create(paymentURI+uri);
     }
 
+    /**
+     * 결제 성공 시 수행하는 로직
+     * 1. 결제 번호로 주문 찾기
+     * 2. 주문에 포함된 상품의 상태를 배송 중으로 수정
+     * 3.
+     * @param dto
+     * @return
+     */
     @Override
+    @Transactional
     public PaymentStatusDto confirm(PaymentStatusDto dto) {
-//        Mono<PaymentStatusDto> mono = WebClient.create()
-//                .put()
-//                .uri(getUri("/confirm"))
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .bodyValue(dto)
-//                .retrieve()
-//                .bodyToMono(PaymentStatusDto.class)
-//                .onErrorResume(e -> {
-//                    if (e instanceof WebClientResponseException) {
-//                        var responseException = (WebClientResponseException) e;
-//                        if (responseException.getStatusCode().is4xxClientError()) {
-//                            cancel(dto);
-//                            System.out.println(e.getMessage());
-//                        }
-//                    }
-//                    return Mono.error(e);
-//                });
-//        PaymentStatusDto result = mono.block();
-        System.out.println("결제 결과 : "+dto);
-        return dto;
+        // 결제 결과를 가져오기
+        PaymentStatusDto payResult = getPaymentResult(dto);
+        System.out.println("결제 결과 : "+payResult);
+        if(payResult.status().equals(PaymentStatus.FAILED)){
+            // 결제 실패한 경우
+            // 분산락을 사용했다면 예외를 발생시켰을 때 주문 속 상품의 상태가 PROCESSING에서 PENDING으로 바뀌어야함.
+            throw new BaseException(BaseResponseStatus.PAYMENT_FAILED);
+        }
+        try{
+            // 결제 성공한 경우
+            // 결제 id를 가진 주문을 찾기
+            System.out.println("결제 id가 "+dto.paymentId()+"를 가진 주문을 찾자.");
+            Order order = orderRepository.findByPaymentId(dto.paymentId())
+                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+            System.out.println("주문 번호 : "+order.getId());
+            // 해당 주문에 들어간 상품의 상태를 바꾸기
+            changeActualProductStatus(order);
+            return payResult;
+        }
+        catch (RuntimeException e){
+            cancel(payResult);
+            // 분산락을 사용했다면 주문 속 상품의 상태가 PENDING으로 바뀌어야함.
+            throw e;
+        }
+
+    }
+
+    @Override
+    public OrderDto result(PaymentStatusDto dto) {
+        Order order = orderRepository.findByPaymentId(dto.paymentId())
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        return order.toDto();
+    }
+
+    private PaymentStatusDto getPaymentResult(PaymentStatusDto dto) {
+        Mono<PaymentStatusDto> mono = WebClient.create()
+                .put()
+                .uri(getUri("/mock/payments/confirm"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(PaymentStatusDto.class);
+        return mono.block();
+    }
+
+    @Transactional
+    public void changeActualProductStatus(Order order) {
+        order.getActualProducts()
+                .forEach(ap -> ap.updateActualProductStatus(ActualStatus.SHIPPING));
     }
 
     @Override
     public PaymentStatusDto cancel(PaymentStatusDto dto) {
-        System.out.println("결제 취소");
-        return null;
+        Mono<PaymentStatusDto> mono = WebClient.create()
+                .post()
+                .uri(getUri("/mock/payments/cancel"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(PaymentStatusDto.class);
+        return mono.block();
     }
 }

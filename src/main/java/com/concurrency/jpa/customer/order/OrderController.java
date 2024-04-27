@@ -1,8 +1,6 @@
 package com.concurrency.jpa.customer.order;
 
-import com.concurrency.jpa.customer.common.BaseResponse;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
-import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.service.OrderService;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
@@ -13,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
@@ -21,21 +20,24 @@ import java.net.URI;
 public class OrderController {
     @Autowired
     OrderService orderService;
-    @Autowired
-    PaymentService paymentService;
+
 
     @PostMapping("/order")
     public ResponseEntity<?> postOrder(@RequestBody CreateOrderRequestDto createOrderRequestDto) {
 
-        PaymentInitialRequestDto paymentRequest = orderService.createOrder(createOrderRequestDto);
-        PaymentStatusDto payPending= paymentService.pay(paymentRequest);
+        PaymentStatusDto paymentRequest = orderService.createOrder(createOrderRequestDto);
+
+        // 사용자가 결제 결과 화면 볼 수 있도록 리다이렉트
+        URI redirectUri = UriComponentsBuilder.fromUriString("/payments/result")
+                .queryParam("paymentId", paymentRequest.paymentId())
+                .queryParam("status", paymentRequest.status())
+                .build()
+                .toUri();
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(URI.create("/payment/result"));
-//         baseResponse에 header 추가
-        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
-                .headers(headers)
-                .body(payPending);
-//        return ResponseEntity.ok().body(payPending);
+        System.out.println(paymentRequest);
+        // 사용자가 결제 결과 화면 볼 수 있도록 리다이렉트
+        headers.setLocation(redirectUri);
+        return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
     }
 
     @PutMapping("/confirm")

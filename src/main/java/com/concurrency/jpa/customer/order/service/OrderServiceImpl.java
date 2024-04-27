@@ -8,15 +8,15 @@ import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.common.BaseException;
 import com.concurrency.jpa.customer.common.BaseResponseStatus;
+import com.concurrency.jpa.customer.lock.LockService;
 import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
-import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
+import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
+import com.concurrency.jpa.customer.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -30,17 +30,15 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
-    @Autowired
     private final OrderRepository orderRepository;
-    @Autowired
     private final ActualProductRepository actualProductRepository;
-    @Autowired
     private final CoreProductRepository coreProductRepository;
-
+    private final PaymentService paymentService;
+    private final LockService lockService;
 
     @Override
     @Transactional
-    public PaymentInitialRequestDto createOrder(CreateOrderRequestDto createOrderRequestDto){
+    public PaymentStatusDto createOrder(CreateOrderRequestDto createOrderRequestDto){
         // 유저 권한 확인하기
         checkUserAuthority(createOrderRequestDto.getClientType());
         // 재고 확인하고 감소시키기
@@ -50,7 +48,9 @@ public class OrderServiceImpl implements OrderService {
         // 주문 생성
         // 주문과 유형제품 연결 & 유형제품 상태 업데이트
         Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
-        return new PaymentInitialRequestDto(savedOrder.toDto());
+        PaymentStatusDto payPending= paymentService.pay(new PaymentInitialRequestDto(savedOrder.toDto()));
+        savedOrder.setPaymentId(payPending.paymentId());
+        return payPending;
     }
 
     private void checkUserAuthority(Actors clientType) {
@@ -100,7 +100,7 @@ public class OrderServiceImpl implements OrderService {
         requireProducts.forEach(this::subtractCoreProductStock);
     }
 
-    ///////////////////////// 재고를 감소
+    ///////////////////////// 재고량 감소
 
     @Override
     @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -145,4 +145,5 @@ public class OrderServiceImpl implements OrderService {
             }
         }
     }
+
 }

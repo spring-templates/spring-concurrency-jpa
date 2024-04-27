@@ -1,5 +1,7 @@
 package com.concurrency.jpa.customer.payment;
 
+import com.concurrency.jpa.customer.order.dto.OrderDto;
+import com.concurrency.jpa.customer.payment.dto.PaymentStatus;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import com.concurrency.jpa.customer.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -9,23 +11,29 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/payment")
+@RequestMapping("/payments")
 public class PaymentController {
 
     @Autowired
     private PaymentService paymentService;
 
+    /**
+     * 주문 서버가 결제 서버에게 결제 결과를 요청함
+     * @param dto
+     * @return
+     */
     @PutMapping("/confirm")
     public ResponseEntity<?> confirm(@RequestBody PaymentStatusDto dto){
+        System.out.println("결제 서버로 부터 받은 정보 : "+dto);
         PaymentStatusDto result = paymentService.confirm(dto);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/result")
-    public ResponseEntity<?> result(@RequestBody PaymentStatusDto dto){
-//        PaymentStatusDto result = paymentService.confirm(dto);
-//        return ResponseEntity.ok(result);
-        System.out.println("클라이언트에게 결제 결과 보여주는 로직 "+dto);
-        return null;
+    public ResponseEntity<?> result(@RequestParam("paymentId") Long paymentId,
+                                    @RequestParam("status") PaymentStatus status){
+        PaymentStatusDto dto = new PaymentStatusDto(paymentId, status);
+        OrderDto result = paymentService.result(dto);
+        return ResponseEntity.ok(result);
     }
 }

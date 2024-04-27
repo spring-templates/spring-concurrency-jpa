@@ -59,4 +59,8 @@ public class Order {
                 .paymentId(paymentId)
                 .build();
     }
+
+    public void setPaymentId(Long paymentId) {
+        this.paymentId = paymentId;
+    }
 }

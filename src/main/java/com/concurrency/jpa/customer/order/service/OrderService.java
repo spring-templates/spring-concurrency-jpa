@@ -4,15 +4,14 @@ import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
-import com.concurrency.jpa.customer.order.dto.OrderDto;
-import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
+import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
 public interface OrderService {
-    PaymentInitialRequestDto createOrder(CreateOrderRequestDto createOrderRequestDto);
+    PaymentStatusDto createOrder(CreateOrderRequestDto createOrderRequestDto);
     @Transactional
     Order getOrder(CreateOrderRequestDto createOrderRequestDto, List<ActualProduct> actualProducts);
 

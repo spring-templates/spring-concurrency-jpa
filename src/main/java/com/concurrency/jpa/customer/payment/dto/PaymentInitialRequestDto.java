@@ -17,6 +17,6 @@ public record PaymentInitialRequestDto(
             new CustomerRequestDto("abcBuyer@naver.com", "oh sol"),
             AbstractPayment.valueOf(orderDto.getPaymentMethod().toString()),
             orderDto.getTotalPrice(),
-            URI.create("http://localhost:8080/payment/confirm"));
+            URI.create("http://localhost:8080/payments/confirm"));
     }
 }
