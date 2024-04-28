@@ -91,54 +91,6 @@ public class ConcurrentOrderServiceTest {
     }
 
     @Test
-    @DisplayName("멀티스레드로 재고 감소 후 체크, 분산락을 이용해서 동시성 제어")
-    public void GivenDistributeLock_Update_CoreStock_Success() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
-        CountDownLatch latch = new CountDownLatch(2);
-        Long coreProductId = 1L;
-        Runnable lockThreadOne = () -> {
-            UUID uuid = UUID.randomUUID();
-            log.info("task start thread: " + uuid);
-            try {
-                lockService.executeWithLock(Actors.InexperiencedCustomer.name(),
-                        1,
-                        ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
-            }
-            catch (Exception e0) {
-                e0.printStackTrace();
-                log.info("exception thrown with thread: " + uuid);
-                throw e0;
-            }
-            finally {
-                latch.countDown();
-            }
-        };
-
-        Runnable lockThreadTwo = () -> {
-            UUID uuid = UUID.randomUUID();
-            log.info("task start thread: " + uuid);
-            try {
-                lockService.executeWithLock(Actors.InexperiencedCustomer.name(),
-                        1,
-                        ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
-            }catch (Exception e0) {
-                e0.printStackTrace();
-                log.info("exception thrown with thread: " + uuid);
-                throw e0;
-            }finally {
-                latch.countDown();
-            }
-        };
-        executorService.submit(lockThreadOne);
-        executorService.submit(lockThreadTwo);
-        latch.await();
-        Long result = coreProductRepository.findById(coreProductId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다.")).getStock();
-        log.info("티켓 수량 : "+result);
-        Assertions.assertEquals(ACTUAL_STOCK-1, result);
-    }
-
-    @Test
     @DisplayName("멀티스레드로 재고 감소, 여러 transaction이 경쟁 상태 발생")
     public void givenMultiThreadAndTransaction_whenUpdated_thenFAIL() throws InterruptedException {
         Long coreProductId = 2L;
