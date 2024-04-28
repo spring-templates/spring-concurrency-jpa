@@ -6,11 +6,13 @@ import com.concurrency.jpa.customer.common.BaseResponseStatus;
 import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
+import com.concurrency.jpa.customer.order.service.OrderService;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatus;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,21 +26,12 @@ import java.net.URI;
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService{
-    private static final String paymentURI = "http://localhost:8080";
-    @Autowired
-    private final OrderRepository orderRepository;
-    @Override
-    public PaymentStatusDto pay(PaymentInitialRequestDto dto) {
-        Mono<PaymentStatusDto> mono = WebClient.create()
-                .post()
-                .uri(getUri("/mock/payments"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(dto)
-                .retrieve()
-                .bodyToMono(PaymentStatusDto.class);
-        return mono.block();
-    }
 
+    @Value("${payment.server.url}")
+    private String paymentURI;
+
+    private final OrderRepository orderRepository;
+    private final OrderService orderService;
     private URI getUri(String uri) {
         return URI.create(paymentURI+uri);
     }
@@ -52,7 +45,6 @@ public class PaymentServiceImpl implements PaymentService{
      * @return
      */
     @Override
-    @Transactional
     public PaymentStatusDto confirm(PaymentStatusDto dto) {
         // 결제 결과를 가져오기
         PaymentStatusDto payResult = getPaymentResult(dto);
@@ -60,6 +52,11 @@ public class PaymentServiceImpl implements PaymentService{
         if(payResult.status().equals(PaymentStatus.FAILED)){
             // 결제 실패한 경우
             // 분산락을 사용했다면 예외를 발생시켰을 때 주문 속 상품의 상태가 PROCESSING에서 PENDING으로 바뀌어야함.
+            Order order = orderRepository.findByPaymentId(dto.paymentId())
+                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+            System.out.println("롤백 대상 주문 id : "+order.getId());
+            orderService.rollback(dto.paymentId());
+            // Runtime exception을 발생시키면 롤백한걸 롤백하게된다.
             throw new BaseException(BaseResponseStatus.PAYMENT_FAILED);
         }
         try{
@@ -75,14 +72,18 @@ public class PaymentServiceImpl implements PaymentService{
         }
         catch (RuntimeException e){
             cancel(payResult);
+            orderService.rollback(dto.paymentId());
             // 분산락을 사용했다면 주문 속 상품의 상태가 PENDING으로 바뀌어야함.
             throw e;
         }
 
     }
 
+
+
     @Override
     public OrderDto result(PaymentStatusDto dto) {
+        System.out.println("결과 확인 결제 정보 : "+dto);
         Order order = orderRepository.findByPaymentId(dto.paymentId())
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         return order.toDto();

@@ -13,15 +13,20 @@ import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.payment.dto.AbstractPayment;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import com.concurrency.jpa.customer.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +42,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ActualProductRepository actualProductRepository;
     private final CoreProductRepository coreProductRepository;
-    private final PaymentService paymentService;
-
+    @Value("${payment.server.url}")
+    private String paymentURI;
     @Override
     @Transactional
     public PaymentStatusDto createOrder(CreateOrderRequestDto createOrderRequestDto){
@@ -51,9 +56,22 @@ public class OrderServiceImpl implements OrderService {
         // 주문 생성
         // 주문과 유형제품 연결 & 유형제품 상태 업데이트
         Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
-        PaymentStatusDto payPending = paymentService.pay(new PaymentInitialRequestDto(savedOrder.toDto()));
+        PaymentStatusDto payPending = pay(new PaymentInitialRequestDto(
+                AbstractPayment.valueOf(createOrderRequestDto.getPaymentMethod().name()),
+                        savedOrder.getTotalPrice()));
         savedOrder.setPaymentId(payPending.paymentId());
+        orderRepository.save(savedOrder);
         return payPending;
+    }
+    private PaymentStatusDto pay(PaymentInitialRequestDto dto) {
+        Mono<PaymentStatusDto> mono = WebClient.create()
+                .post()
+                .uri(paymentURI+"/mock/payments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(PaymentStatusDto.class);
+        return mono.block();
     }
 
     private void checkUserAuthority(Actors clientType) {
@@ -65,12 +83,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Order getOrder(CreateOrderRequestDto createOrderRequestDto, List<ActualProduct> actualProducts) {
-        System.out.println("주문 생성하기");
         Order order = createOrderRequestDto.toEntity();
-        System.out.println("주문 생성 : "+order.getId());
         order.addActualProducts(actualProducts);
-        System.out.println("주문에 유형 상품 연결 : "+order.getActualProducts().size());
-        return orderRepository.save(order);
+        return order;
     }
 
     @Override
@@ -83,7 +98,6 @@ public class OrderServiceImpl implements OrderService {
                                     coreProductId,
                                     ActualStatus.PENDING_ORDER,
                                     stock));
-                    System.out.println("유형 상품 찾기 "+actualProducts.size());
                 }
 
         );
@@ -108,6 +122,27 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void updateCoreProductsStock(Map<Long, Long> requireProducts) {
         requireProducts.forEach(this::subtractCoreProductStock);
+    }
+
+    /**
+     * 결제가 실패했기 때문에 해당 결제 id를 가진 주문의 상품들을 이전 상태로 돌려야한다.
+     * @param paymentId
+     */
+    @Transactional
+    public void rollback(Long paymentId) {
+        System.out.println("결제 실패 id : "+paymentId);
+        Order order = orderRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        System.out.println("주문 id : "+order.getId());
+        // 유형 상품의 상태를 바꾸기
+        // 핵심 상품의 재고를 늘리기
+        order.getActualProducts().forEach(
+                a -> {
+                    System.out.println("롤백 상품 : "+a.getId()+" 핵심 id : "+a.getCoreProductId());
+                    a.updateActualProductStatus(ActualStatus.PENDING_ORDER);
+                    subtractCoreProductStock(a.getCoreProductId(), -1L);
+                }
+        );
     }
 
     ///////////////////////// 재고량 감소

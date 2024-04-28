@@ -25,4 +25,6 @@ public interface OrderService {
 
     @Transactional
     long subtractCoreProductStock(Long coreProductId, Long reqStock);
+
+    void rollback(Long paymentId);
 }

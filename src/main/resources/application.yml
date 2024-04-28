@@ -7,7 +7,7 @@
 
 # Core configuration
 spring.application.name: spring-web-jpa-concurrency
-spring.profiles.active: default, dev # , init-sql
+spring.profiles.active: default, dev , init-sql
 
 # Database configuration
 spring.datasource:
@@ -15,3 +15,6 @@ spring.datasource:
   username: chansol
   password: solsol
   driver-class-name: com.mysql.cj.jdbc.Driver
+
+# Payment Server url
+payment.server.url: http://localhost:8081

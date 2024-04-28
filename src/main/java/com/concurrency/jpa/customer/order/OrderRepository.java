@@ -9,13 +9,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends
         JpaRepository<Order, Long> {
-    @Query(value = "SELECT DISTINCT o FROM Order o JOIN FETCH o.actualProducts WHERE o.paymentId = :id")
-    Optional<Order> findByPaymentId(@Param("id") Long id);
-
-
+    @Query(value = "SELECT DISTINCT o FROM Order o JOIN FETCH o.actualProducts WHERE o.paymentId = :paymentId")
+    Optional<Order> findByPaymentId(@Param("paymentId") Long paymentId);
 }

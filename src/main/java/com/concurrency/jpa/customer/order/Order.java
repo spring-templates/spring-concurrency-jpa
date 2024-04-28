@@ -29,7 +29,9 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(255)")
     private Actors actor;
+    @Getter
     private Long totalPrice;
+    @Getter
     private Long paymentId;
     private PaymentMethods paymentMethod;
     @Getter

@@ -12,11 +12,11 @@ public record PaymentInitialRequestDto(
     // The URL to return to after the payment is completed.
     URI redirect
 ) {
-    public PaymentInitialRequestDto(OrderDto orderDto){
+    public PaymentInitialRequestDto(AbstractPayment abstractPayment, Long price){
         this(new CustomerRequestDto("abcSeller@gmail.com", "sol sol"),
             new CustomerRequestDto("abcBuyer@naver.com", "oh sol"),
-            AbstractPayment.valueOf(orderDto.getPaymentMethod().toString()),
-            orderDto.getTotalPrice(),
+                abstractPayment,
+                price,
             URI.create("http://localhost:8080/payments/confirm"));
     }
 }
