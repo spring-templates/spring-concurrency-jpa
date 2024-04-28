@@ -1,6 +1,9 @@
 package com.concurrency.jpa.customer.lock;
 
+import java.util.function.Supplier;
+
 public interface LockService {
-  String lock(Long orderId);
-  void unlock(String key);
+  <T> T executeWithLock(String userLockName,
+                        int timeoutSeconds,
+                        Supplier<T> supplier);
 }

@@ -90,7 +90,7 @@ public class OrderServiceTest {
 
     @Test
     public void Find_ProductStock_Success(){
-        when(actualProductRepository.findByCoreProductIdAndActualStatus(
+        when(actualProductRepository.findByCoreProduct_IdAndActualStatus(
                 (long) 1,
                 ActualStatus.PENDING_ORDER,
                 PageRequest.of(0, Math.toIntExact(3))))

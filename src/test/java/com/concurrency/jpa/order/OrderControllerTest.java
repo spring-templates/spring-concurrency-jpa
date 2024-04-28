@@ -42,7 +42,7 @@ public class OrderControllerTest {
         CreateOrderRequestDto createOrderRequestDto = new CreateOrderRequestDto(coreProduct, Actors.InexperiencedCustomer, PaymentMethods.CREDIT_CARD);
         String content = objectMapper.writeValueAsString(createOrderRequestDto);
         System.out.println(content);
-        mockMvc.perform(post("/order/order")
+        mockMvc.perform(post("/order")
                 .content(content)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))

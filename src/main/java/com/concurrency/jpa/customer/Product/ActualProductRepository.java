@@ -15,8 +15,8 @@ public interface ActualProductRepository extends JpaRepository<ActualProduct, Lo
             "WHERE a.coreProduct.id = :coreId AND a.actualStatus = :actualStatus")
     Long countByCoreProductIdANDActualStatus(@Param("coreId") Long k, @Param("actualStatus") ActualStatus actualStatus);
 
-    @Query(value = "SELECT a FROM ActualProduct a " +
-            "WHERE a.coreProduct.id = :coreProductId AND a.actualStatus = :reqStatus")
-    List<ActualProduct> findByCoreProductIdAndActualStatus(@Param("coreProductId") Long coreProductId, @Param("reqStatus")ActualStatus reqStatus, Pageable pageable);
+//    @Query(value = "SELECT a FROM ActualProduct a " +
+//            "WHERE a.coreProduct.id = :coreProductId AND a.actualStatus = :reqStatus")
+    List<ActualProduct> findByCoreProduct_IdAndActualStatus(@Param("coreProductId") Long coreProductId, @Param("reqStatus")ActualStatus reqStatus, Pageable pageable);
 
 }

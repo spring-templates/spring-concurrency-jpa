@@ -26,6 +26,7 @@ repositories {
     // spring-distribute-lock
     implementation("org.springframework.integration:spring-integration-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-integration")
 
     // spring-web-payment
     implementation("org.springframework.boot:spring-boot-starter-webflux")

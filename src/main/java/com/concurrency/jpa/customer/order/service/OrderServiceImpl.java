@@ -18,6 +18,7 @@ import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import com.concurrency.jpa.customer.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 
 @Service
@@ -34,7 +38,6 @@ public class OrderServiceImpl implements OrderService {
     private final ActualProductRepository actualProductRepository;
     private final CoreProductRepository coreProductRepository;
     private final PaymentService paymentService;
-    private final LockService lockService;
 
     @Override
     @Transactional
@@ -48,7 +51,7 @@ public class OrderServiceImpl implements OrderService {
         // 주문 생성
         // 주문과 유형제품 연결 & 유형제품 상태 업데이트
         Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
-        PaymentStatusDto payPending= paymentService.pay(new PaymentInitialRequestDto(savedOrder.toDto()));
+        PaymentStatusDto payPending = paymentService.pay(new PaymentInitialRequestDto(savedOrder.toDto()));
         savedOrder.setPaymentId(payPending.paymentId());
         return payPending;
     }
@@ -62,8 +65,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Order getOrder(CreateOrderRequestDto createOrderRequestDto, List<ActualProduct> actualProducts) {
+        System.out.println("주문 생성하기");
         Order order = createOrderRequestDto.toEntity();
+        System.out.println("주문 생성 : "+order.getId());
         order.addActualProducts(actualProducts);
+        System.out.println("주문에 유형 상품 연결 : "+order.getActualProducts().size());
         return orderRepository.save(order);
     }
 
@@ -71,12 +77,15 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public List<ActualProduct> concatActualProductList(Map<Long, Long> coreProducts) {
         List<ActualProduct> actualProducts = new ArrayList<>();
-        coreProducts.forEach((coreProductId, stock) ->
-                        actualProducts.addAll(
-                                findActualProducts(
-                                        coreProductId,
-                                        ActualStatus.PENDING_ORDER,
-                                        stock))
+        coreProducts.forEach((coreProductId, stock) ->{
+                    actualProducts.addAll(
+                            findActualProducts(
+                                    coreProductId,
+                                    ActualStatus.PENDING_ORDER,
+                                    stock));
+                    System.out.println("유형 상품 찾기 "+actualProducts.size());
+                }
+
         );
         return actualProducts;
     }
@@ -84,7 +93,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock){
-        return actualProductRepository.findByCoreProductIdAndActualStatus(
+        System.out.println("유형 상품 찾기 전");
+        return actualProductRepository.findByCoreProduct_IdAndActualStatus(
                 coreProductId,
                 actualStatus,
                 PageRequest.of(0, Math.toIntExact(stock)));
@@ -105,6 +115,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public long subtractCoreProductStock(Long coreProductId, Long reqStock){
+        System.out.println("핵심 상품 찾기 전 : "+coreProductId);
         CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         if(reqStock > coreProduct.getStock()){
