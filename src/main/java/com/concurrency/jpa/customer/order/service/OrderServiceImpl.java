@@ -42,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ActualProductRepository actualProductRepository;
     private final CoreProductRepository coreProductRepository;
+    private final LockService lockService;
     @Value("${payment.server.url}")
     private String paymentURI;
     @Override
@@ -49,19 +50,23 @@ public class OrderServiceImpl implements OrderService {
     public PaymentStatusDto createOrder(CreateOrderRequestDto createOrderRequestDto){
         // 유저 권한 확인하기
         checkUserAuthority(createOrderRequestDto.getClientType());
-        // 재고 확인하고 감소시키기
-        updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
-        // 유형제품 찾기
-        List<ActualProduct> actualProducts = concatActualProductList(createOrderRequestDto.getCoreProducts());
-        // 주문 생성
-        // 주문과 유형제품 연결 & 유형제품 상태 업데이트
-        Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
-        PaymentStatusDto payPending = pay(new PaymentInitialRequestDto(
-                AbstractPayment.valueOf(createOrderRequestDto.getPaymentMethod().name()),
-                        savedOrder.getTotalPrice()));
-        savedOrder.setPaymentId(payPending.paymentId());
-        Order saved = orderRepository.save(savedOrder);
-        return payPending;
+        return lockService.executeWithLock(1L,
+                1, () -> {
+                    // 재고 확인하고 감소시키기
+                    updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
+                    // 유형제품 찾기
+                    List<ActualProduct> actualProducts = concatActualProductList(createOrderRequestDto.getCoreProducts());
+                    // 주문 생성
+                    // 주문과 유형제품 연결 & 유형제품 상태 업데이트
+                    Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
+                    PaymentStatusDto payPending = pay(new PaymentInitialRequestDto(
+                            AbstractPayment.valueOf(createOrderRequestDto.getPaymentMethod().name()),
+                            savedOrder.getTotalPrice()));
+                    savedOrder.setPaymentId(payPending.paymentId());
+                    Order saved = orderRepository.save(savedOrder);
+                    return payPending;
+                });
+
     }
     private PaymentStatusDto pay(PaymentInitialRequestDto dto) {
         Mono<PaymentStatusDto> mono = WebClient.create()

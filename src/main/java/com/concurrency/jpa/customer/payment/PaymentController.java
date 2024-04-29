@@ -26,7 +26,14 @@ public class PaymentController {
     @PutMapping("/confirm")
     public ResponseEntity<?> confirm(@RequestBody PaymentStatusDto dto){
         System.out.println("결제 서버로 부터 받은 정보 : "+dto);
-        PaymentStatusDto result = paymentService.confirm(dto);
+        PaymentStatusDto result = null;
+        try{
+            result = paymentService.confirm(dto);
+        }
+        catch (BaseException | InterruptedException e){
+            throw new RuntimeException(e);
+        }
+
         System.out.println("결제 서버로 보낼 정보 : "+result);
         return ResponseEntity.ok(result);
     }

@@ -53,37 +53,48 @@ public class PaymentServiceImpl implements PaymentService{
      * @return
      */
     @Override
-    public PaymentStatusDto confirm(PaymentStatusDto dto) {
+    public PaymentStatusDto confirm(PaymentStatusDto dto) throws InterruptedException {
         // 결제 결과를 API로 가져오기
         PaymentStatusDto payResult = getPaymentResult(dto);
-        return lockService.executeWithLock(dto.paymentId(),
-                1, () -> {
-                    if(payResult.status().equals(PaymentStatus.FAILED)){
-                        System.out.println("결제 결과 : "+payResult);
-                        // 결제 실패한 경우
-                        orderService.rollback(dto.paymentId());
-                        return payResult;
-                    }
-                    try{
-                        // 결제 성공한 경우
-                        // 결제 id를 가진 주문을 찾기
-                        System.out.println("결제 id가 "+dto.paymentId()+"를 가진 주문을 찾자.");
-                        // 해당 주문에 들어간 상품의 상태를 바꾸기
-                        changeActualProductStatus(dto.paymentId());
-                        return payResult;
-                    }
-                    catch (RuntimeException e){
-                        cancel(payResult);
-                        orderService.rollback(dto.paymentId());
-                        throw e;
-                    }
-                });
+        int patience = 4;
+        while(patience > 0){
+            try{
+                return lockService.executeWithLock(1L,
+                        1, () -> {
+                            if(payResult.status().equals(PaymentStatus.FAILED)){
+                                System.out.println("결제 결과 : "+payResult);
+                                // 결제 실패한 경우
+                                orderService.rollback(dto.paymentId());
+                                return payResult;
+                            }
+                            try{
+                                // 결제 성공한 경우
+                                // 결제 id를 가진 주문을 찾기
+                                System.out.println("결제 id가 "+dto.paymentId()+"를 가진 주문을 찾자.");
+                                // 해당 주문에 들어간 상품의 상태를 바꾸기
+                                changeActualProductStatus(dto.paymentId());
+                                return payResult;
+                            }
+                            catch (RuntimeException e){
+                                cancel(payResult);
+                                orderService.rollback(dto.paymentId());
+                                throw e;
+                            }
+                        });
+            }
+            catch (RuntimeException e){
+                e.printStackTrace();
+                Thread.sleep(500);
+                patience--;
+            }
+        }
+        System.out.println("참을 수 없습니다!!");
+        throw new BaseException(BaseResponseStatus.FAIL);
     }
 
 
     @Override
     public OrderDto result(PaymentStatusDto dto) throws InterruptedException {
-        System.out.println("");
         int patience = 4;
 //        while(patience > 0){
 //            System.out.println("결과 확인 결제 정보 : "+dto);
