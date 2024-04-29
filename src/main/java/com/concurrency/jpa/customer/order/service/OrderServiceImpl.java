@@ -12,7 +12,9 @@ import com.concurrency.jpa.customer.lock.LockService;
 import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
+import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.payment.dto.AbstractPayment;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -28,10 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -60,13 +60,13 @@ public class OrderServiceImpl implements OrderService {
                 AbstractPayment.valueOf(createOrderRequestDto.getPaymentMethod().name()),
                         savedOrder.getTotalPrice()));
         savedOrder.setPaymentId(payPending.paymentId());
-        orderRepository.save(savedOrder);
+        Order saved = orderRepository.save(savedOrder);
         return payPending;
     }
     private PaymentStatusDto pay(PaymentInitialRequestDto dto) {
         Mono<PaymentStatusDto> mono = WebClient.create()
                 .post()
-                .uri(paymentURI+"/mock/payments")
+                .uri(paymentURI+"/payments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(dto)
                 .retrieve()
@@ -107,11 +107,16 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock){
-        System.out.println("유형 상품 찾기 전");
-        return actualProductRepository.findByCoreProduct_IdAndActualStatus(
+        List<ActualProduct> actualProducts = actualProductRepository.findByCoreProduct_IdAndActualStatus(
                 coreProductId,
                 actualStatus,
                 PageRequest.of(0, Math.toIntExact(stock)));
+        return actualProducts;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActualProduct> findActualProductsByOrder(Long orderId){
+        return actualProductRepository.findByOrder_Id(orderId);
     }
 
     /**
@@ -133,16 +138,33 @@ public class OrderServiceImpl implements OrderService {
         System.out.println("결제 실패 id : "+paymentId);
         Order order = orderRepository.findByPaymentId(paymentId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        order.setOrderStatus(OrderStatus.FAIL);
         System.out.println("주문 id : "+order.getId());
         // 유형 상품의 상태를 바꾸기
         // 핵심 상품의 재고를 늘리기
-        order.getActualProducts().forEach(
+        List<ActualProduct> actualProducts = findActualProductsByOrder(order.getId());
+        System.out.println("유형 상품 개수 : "+actualProducts.size());
+        actualProducts.forEach(
                 a -> {
-                    System.out.println("롤백 상품 : "+a.getId()+" 핵심 id : "+a.getCoreProductId());
+                    a.setOrder(null);
                     a.updateActualProductStatus(ActualStatus.PENDING_ORDER);
                     subtractCoreProductStock(a.getCoreProductId(), -1L);
                 }
         );
+        actualProductRepository.saveAll(actualProducts);
+        orderRepository.save(order);
+    }
+
+    @Override
+    public OrderDto findByPaymentId(long l) {
+        Optional<Order> order = orderRepository.findByPaymentId(l);
+        if(order.isEmpty()){
+            System.out.println("빈 객체");
+            return null;
+        }
+        else{
+            return order.get().toDto();
+        }
     }
 
     ///////////////////////// 재고량 감소

@@ -1,5 +1,6 @@
 package com.concurrency.jpa.customer.payment;
 
+import com.concurrency.jpa.customer.common.BaseException;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatus;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
@@ -26,6 +27,7 @@ public class PaymentController {
     public ResponseEntity<?> confirm(@RequestBody PaymentStatusDto dto){
         System.out.println("결제 서버로 부터 받은 정보 : "+dto);
         PaymentStatusDto result = paymentService.confirm(dto);
+        System.out.println("결제 서버로 보낼 정보 : "+result);
         return ResponseEntity.ok(result);
     }
 
@@ -33,7 +35,13 @@ public class PaymentController {
     public ResponseEntity<?> result(@RequestParam("paymentId") Long paymentId,
                                     @RequestParam("status") PaymentStatus status){
         PaymentStatusDto dto = new PaymentStatusDto(paymentId, status);
-        OrderDto result = paymentService.result(dto);
-        return ResponseEntity.ok(result);
+        try{
+            OrderDto result = paymentService.result(dto);
+            return ResponseEntity.ok(result);
+        }
+        catch (BaseException | InterruptedException e){
+            throw new RuntimeException(e);
+        }
+
     }
 }

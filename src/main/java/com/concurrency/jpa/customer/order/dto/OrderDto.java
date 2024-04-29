@@ -1,6 +1,7 @@
 package com.concurrency.jpa.customer.order.dto;
 
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.order.enums.PaymentMethods;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ public class OrderDto {
     private Long totalPrice;
     private Long paymentId;
     private PaymentMethods paymentMethod;
+    private OrderStatus orderStatus;
 //    @JsonProperty("payment_method")
 //    private PaymentMethods paymentMethod;
 }

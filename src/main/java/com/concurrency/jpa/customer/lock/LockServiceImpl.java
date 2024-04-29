@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Service;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Service
@@ -19,10 +22,10 @@ public class LockServiceImpl implements LockService{
     }
 
     @Override
-    public <T> T executeWithLock(String userLockName,
+    public <T> T executeWithLock(Long paymentId,
                                  int timeoutSeconds,
                                  Supplier<T> supplier) {
-        var lock = lockRegistry.obtain(userLockName);
+        var lock = lockRegistry.obtain(String.valueOf(paymentId));
         boolean lockAcquired =  lock.tryLock();
         if(lockAcquired){
             try{
@@ -37,4 +40,27 @@ public class LockServiceImpl implements LockService{
             throw new RuntimeException(EXCEPTION_MESSAGE);
         }
     }
+
+    @Override
+    public <T> void executeWithLock(Long paymentId,
+                                    int timeoutSeconds,
+                                    T dto,
+                                    Consumer<T> consumer) {
+        var lock = lockRegistry.obtain(String.valueOf(paymentId));
+        boolean lockAcquired =  lock.tryLock();
+        if(lockAcquired){
+            try{
+                log.info("lock taken");
+                consumer.accept(dto);
+            }
+            finally {
+                lock.unlock();
+            }
+        }
+        else{
+            throw new RuntimeException(EXCEPTION_MESSAGE);
+        }
+    }
+
+
 }

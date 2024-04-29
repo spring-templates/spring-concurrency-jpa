@@ -95,7 +95,7 @@ public class DistributeLockOrderServiceTest {
             UUID uuid = UUID.randomUUID();
             log.info("task start thread: " + uuid);
             try {
-                lockService.executeWithLock(Actors.InexperiencedCustomer.name(),
+                lockService.executeWithLock(1L,
                         1,
                         ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
             }
@@ -113,7 +113,7 @@ public class DistributeLockOrderServiceTest {
             UUID uuid = UUID.randomUUID();
             log.info("task start thread: " + uuid);
             try {
-                lockService.executeWithLock(Actors.InexperiencedCustomer.name(),
+                lockService.executeWithLock(1L,
                         1,
                         ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
             }catch (Exception e0) {
@@ -143,7 +143,7 @@ public class DistributeLockOrderServiceTest {
             UUID uuid = UUID.randomUUID();
             log.info("task start thread: " + uuid);
             try {
-                lockService.executeWithLock(Actors.InexperiencedCustomer.name(),
+                lockService.executeWithLock(1L,
                         1,
                         ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
             }
@@ -164,7 +164,7 @@ public class DistributeLockOrderServiceTest {
             UUID uuid = UUID.randomUUID();
             log.info("task start thread: " + uuid);
             try {
-                lockService.executeWithLock(Actors.InexperiencedCustomer.name(),
+                lockService.executeWithLock(1L,
                         1,
                         ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
             }catch (Exception e0) {
@@ -193,7 +193,7 @@ public class DistributeLockOrderServiceTest {
             UUID uuid = UUID.randomUUID();
             log.info("task start thread: " + uuid);
             try {
-                lockService.executeWithLock(Actors.InexperiencedCustomer.name(),
+                lockService.executeWithLock(1L,
                         1,
                         ()-> {
                             orderService.subtractCoreProductStock(coreProductId, 1L);

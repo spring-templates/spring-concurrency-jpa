@@ -1,10 +1,12 @@
 package com.concurrency.jpa.customer.order;
 
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
+import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.service.OrderService;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import com.concurrency.jpa.customer.payment.service.PaymentService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -45,5 +47,11 @@ public class OrderController {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(URI.create("/"));
         return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
+    }
+
+    @GetMapping("/payment/id")
+    public ResponseEntity<?> getPayment() {
+        OrderDto dto = orderService.findByPaymentId(3L);
+        return ResponseEntity.ok(dto);
     }
 }

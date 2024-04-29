@@ -2,6 +2,7 @@ package com.concurrency.jpa.customer.order.dto;
 
 import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.order.enums.PaymentMethods;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
@@ -33,7 +34,8 @@ public class CreateOrderRequestDto {
         return Order.builder()
                 .actor(clientType)
                 .paymentMethod(paymentMethod)
-                .totalPrice((long) 0)
+                .orderStatus(OrderStatus.PENDING)
+                .totalPrice(0L)
                 .actualProducts(new ArrayList<>())
                 .build();
     }

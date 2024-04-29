@@ -1,11 +1,15 @@
 package com.concurrency.jpa.customer.payment.service;
 
+import com.concurrency.jpa.customer.Product.ActualProductRepository;
+import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.common.BaseException;
 import com.concurrency.jpa.customer.common.BaseResponseStatus;
+import com.concurrency.jpa.customer.lock.LockService;
 import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
+import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.order.service.OrderService;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatus;
@@ -15,10 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import java.net.URI;
+import java.util.List;
 
 /**
  * 외부 결제 서버에 결제 요청, 결과 확인, 결제 취소를 요청하는 부분
@@ -31,7 +37,9 @@ public class PaymentServiceImpl implements PaymentService{
     private String paymentURI;
 
     private final OrderRepository orderRepository;
+    private final ActualProductRepository actualProductRepository;
     private final OrderService orderService;
+    private final LockService lockService;
     private URI getUri(String uri) {
         return URI.create(paymentURI+uri);
     }
@@ -46,53 +54,68 @@ public class PaymentServiceImpl implements PaymentService{
      */
     @Override
     public PaymentStatusDto confirm(PaymentStatusDto dto) {
-        // 결제 결과를 가져오기
+        // 결제 결과를 API로 가져오기
         PaymentStatusDto payResult = getPaymentResult(dto);
-        System.out.println("결제 결과 : "+payResult);
-        if(payResult.status().equals(PaymentStatus.FAILED)){
-            // 결제 실패한 경우
-            // 분산락을 사용했다면 예외를 발생시켰을 때 주문 속 상품의 상태가 PROCESSING에서 PENDING으로 바뀌어야함.
-            Order order = orderRepository.findByPaymentId(dto.paymentId())
-                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-            System.out.println("롤백 대상 주문 id : "+order.getId());
-            orderService.rollback(dto.paymentId());
-            // Runtime exception을 발생시키면 롤백한걸 롤백하게된다.
-            throw new BaseException(BaseResponseStatus.PAYMENT_FAILED);
-        }
-        try{
-            // 결제 성공한 경우
-            // 결제 id를 가진 주문을 찾기
-            System.out.println("결제 id가 "+dto.paymentId()+"를 가진 주문을 찾자.");
-            Order order = orderRepository.findByPaymentId(dto.paymentId())
-                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-            System.out.println("주문 번호 : "+order.getId());
-            // 해당 주문에 들어간 상품의 상태를 바꾸기
-            changeActualProductStatus(order);
-            return payResult;
-        }
-        catch (RuntimeException e){
-            cancel(payResult);
-            orderService.rollback(dto.paymentId());
-            // 분산락을 사용했다면 주문 속 상품의 상태가 PENDING으로 바뀌어야함.
-            throw e;
-        }
-
+        return lockService.executeWithLock(dto.paymentId(),
+                1, () -> {
+                    if(payResult.status().equals(PaymentStatus.FAILED)){
+                        System.out.println("결제 결과 : "+payResult);
+                        // 결제 실패한 경우
+                        orderService.rollback(dto.paymentId());
+                        return payResult;
+                    }
+                    try{
+                        // 결제 성공한 경우
+                        // 결제 id를 가진 주문을 찾기
+                        System.out.println("결제 id가 "+dto.paymentId()+"를 가진 주문을 찾자.");
+                        // 해당 주문에 들어간 상품의 상태를 바꾸기
+                        changeActualProductStatus(dto.paymentId());
+                        return payResult;
+                    }
+                    catch (RuntimeException e){
+                        cancel(payResult);
+                        orderService.rollback(dto.paymentId());
+                        throw e;
+                    }
+                });
     }
 
 
-
     @Override
-    public OrderDto result(PaymentStatusDto dto) {
-        System.out.println("결과 확인 결제 정보 : "+dto);
-        Order order = orderRepository.findByPaymentId(dto.paymentId())
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        return order.toDto();
+    public OrderDto result(PaymentStatusDto dto) throws InterruptedException {
+        System.out.println("");
+        int patience = 4;
+//        while(patience > 0){
+//            System.out.println("결과 확인 결제 정보 : "+dto);
+//            Order order = null;
+//            try{
+//                order = lockService.executeWithLock(dto.paymentId(), 1,
+//                        () ->
+//                        {
+//                            Order o = orderRepository.findByPaymentId(dto.paymentId())
+//                                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+//                            System.out.println(o.getId()+" : "+o.getOrderStatus());
+//                            return o;
+//                        }
+//                );
+//            }catch (RuntimeException e){
+//                e.printStackTrace();
+//            }
+//            if(order != null && order.getOrderStatus() != OrderStatus.PENDING){
+//                return order.toDto();
+//            }
+//            Thread.sleep(500);
+//            patience--;
+//        }
+//        System.out.println("참을 수 없습니다!!");
+//        throw new BaseException(BaseResponseStatus.FAIL);
+        return null;
     }
 
     private PaymentStatusDto getPaymentResult(PaymentStatusDto dto) {
         Mono<PaymentStatusDto> mono = WebClient.create()
                 .put()
-                .uri(getUri("/mock/payments/confirm"))
+                .uri(getUri("/payments/confirm"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(dto)
                 .retrieve()
@@ -101,16 +124,24 @@ public class PaymentServiceImpl implements PaymentService{
     }
 
     @Transactional
-    public void changeActualProductStatus(Order order) {
-        order.getActualProducts()
-                .forEach(ap -> ap.updateActualProductStatus(ActualStatus.SHIPPING));
+    public void changeActualProductStatus(Long paymentId) {
+        Order order = orderRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        order.setOrderStatus(OrderStatus.FINISH);
+        List<ActualProduct> actualStatusList = orderService.findActualProductsByOrder(order.getId());
+        actualStatusList.forEach(
+                a -> a.updateActualProductStatus(ActualStatus.SHIPPING)
+        );
+        System.out.println("주문 상태 : "+order.getOrderStatus());
+        actualProductRepository.saveAll(actualStatusList);
+        orderRepository.save(order);
     }
 
     @Override
     public PaymentStatusDto cancel(PaymentStatusDto dto) {
         Mono<PaymentStatusDto> mono = WebClient.create()
                 .post()
-                .uri(getUri("/mock/payments/cancel"))
+                .uri(getUri("/payments/cancel"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(dto)
                 .retrieve()

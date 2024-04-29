@@ -8,7 +8,7 @@ public interface PaymentService {
 
     PaymentStatusDto confirm(PaymentStatusDto dto);
 
-    OrderDto result(PaymentStatusDto dto);
+    OrderDto result(PaymentStatusDto dto) throws InterruptedException;
 
     PaymentStatusDto cancel(PaymentStatusDto dto);
 }

@@ -4,12 +4,10 @@ import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.order.enums.PaymentMethods;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,14 +24,27 @@ public class Order {
     @Getter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(255)")
     private Actors actor;
+
     @Getter
     private Long totalPrice;
+
     @Getter
+    @Column(name = "payment_id")
     private Long paymentId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(255)")
     private PaymentMethods paymentMethod;
+
+    @Getter
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(255)")
+    private OrderStatus orderStatus;
+
     @Getter
     @OneToMany
     @JoinColumn(name = "order_id")
@@ -59,7 +70,12 @@ public class Order {
                 .totalPrice(totalPrice)
                 .paymentMethod(paymentMethod)
                 .paymentId(paymentId)
+                .orderStatus(orderStatus)
                 .build();
+    }
+
+    public void setOrderStatus(OrderStatus status){
+        this.orderStatus = status;
     }
 
     public void setPaymentId(Long paymentId) {
