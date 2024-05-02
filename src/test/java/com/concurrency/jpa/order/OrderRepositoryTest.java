@@ -83,7 +83,7 @@ public class OrderRepositoryTest {
         order.addActualProducts(actualProducts);
         order.setPaymentId(paymendId);
         Order createdOrder = orderRepository.save(order);
-        Order findOrder = orderRepository.findByPaymentId(paymendId)
+        Order findOrder = orderRepository.findByPaymentIdWithFetch(paymendId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         Assertions.assertEquals(createdOrder.getId(), findOrder.getId());
     }

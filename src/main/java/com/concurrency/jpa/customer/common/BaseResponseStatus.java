@@ -16,6 +16,7 @@ public enum BaseResponseStatus {
     NOT_AUTHORITY(false, HttpStatus.FORBIDDEN, "상품 주문 권한이 없습니다."),
     PAYMENT_FAILED(false, HttpStatus.INTERNAL_SERVER_ERROR, "결제가 실패했습니다."),
     LOCK_ACQUISITION_FAILED(false, HttpStatus.INTERNAL_SERVER_ERROR, "분산락을 얻기 실패했습니다."),
+    ORDER_COMPLETION_YET(false, HttpStatus.BAD_REQUEST, "아직 주문 완료되지 않았습니다."),
     PAYMENT_COMPLETION_DELAYED(false, HttpStatus.INTERNAL_SERVER_ERROR, "결제 완료가 너무 늦어집니다.");
 
 

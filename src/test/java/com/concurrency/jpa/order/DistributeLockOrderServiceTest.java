@@ -216,4 +216,38 @@ public class DistributeLockOrderServiceTest {
         log.info("티켓 수량 : "+result);
         Assertions.assertEquals(ACTUAL_STOCK-1, result);
     }
+
+    @Test
+    @DisplayName("연관관계를 업데이트하고 결과를 읽기")
+    public void Relation_Update() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        CountDownLatch latch1 = new CountDownLatch(1);
+        Long coreProductId = 1L;
+        Runnable lockThreadOne = () -> {
+            UUID uuid = UUID.randomUUID();
+            log.info("task start thread: " + uuid);
+            try {
+                lockService.executeWithLock(1L,
+                        1,
+                        ()-> {
+                            orderService.subtractCoreProductStock(coreProductId, 1L);
+                            throw new RuntimeException("강제 예외 발생");
+                        });
+            }
+            catch (Exception e0) {
+                e0.printStackTrace();
+                log.info("exception thrown with thread: " + uuid);
+                throw e0;
+            }
+            finally {
+                latch1.countDown();
+            }
+        };
+        executorService.submit(lockThreadOne);
+        latch1.await();
+        Long result = coreProductRepository.findById(coreProductId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다.")).getStock();
+        log.info("티켓 수량 : "+result);
+        Assertions.assertEquals(ACTUAL_STOCK-1, result);
+    }
 }

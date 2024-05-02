@@ -43,7 +43,7 @@ public class PaymentController {
                                     @RequestParam("status") PaymentStatus status){
         PaymentStatusDto dto = new PaymentStatusDto(paymentId, status);
         try{
-            OrderDto result = paymentService.result(dto);
+            OrderDto result = paymentService.waitUntilFinish(dto);
             return ResponseEntity.ok(result);
         }
         catch (BaseException | InterruptedException e){

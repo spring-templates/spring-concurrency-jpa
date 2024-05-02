@@ -8,7 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-@JsonPropertyOrder({"isSuccess", "code", "message", "result"})
+@JsonPropertyOrder({"isSuccess", "code", "message", "waitUntilFinish"})
 @Getter
 public class BaseResponse<T> extends ResponseEntity<T> {
     // Http Response의 일관성을 높이자

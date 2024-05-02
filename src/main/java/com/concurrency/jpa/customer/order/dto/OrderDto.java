@@ -18,8 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderDto {
     private Long id;
-    @JsonProperty("actual_products")
-    private List<ActualProductDto> actualProducts = new ArrayList<>();
     @JsonProperty("client_type")
     private Actors clientType;
     private Long totalPrice;

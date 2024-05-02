@@ -63,9 +63,6 @@ public class Order {
     public OrderDto toDto(){
         return OrderDto.builder()
                 .id(id)
-                .actualProducts(actualProducts.stream()
-                        .map(ActualProduct::toDto)
-                        .collect(Collectors.toList()))
                 .clientType(actor)
                 .totalPrice(totalPrice)
                 .paymentMethod(paymentMethod)
@@ -80,5 +77,9 @@ public class Order {
 
     public void setPaymentId(Long paymentId) {
         this.paymentId = paymentId;
+    }
+
+    public void clearActualProducts() {
+        this.actualProducts.clear();
     }
 }

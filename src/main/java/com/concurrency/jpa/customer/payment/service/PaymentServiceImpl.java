@@ -1,8 +1,6 @@
 package com.concurrency.jpa.customer.payment.service;
 
 import com.concurrency.jpa.customer.Product.ActualProductRepository;
-import com.concurrency.jpa.customer.Product.entity.ActualProduct;
-import com.concurrency.jpa.customer.Product.enums.ActualStatus;
 import com.concurrency.jpa.customer.common.BaseException;
 import com.concurrency.jpa.customer.common.BaseResponseStatus;
 import com.concurrency.jpa.customer.lock.LockService;
@@ -11,20 +9,16 @@ import com.concurrency.jpa.customer.order.OrderRepository;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
 import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.order.service.OrderService;
-import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatus;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import java.net.URI;
-import java.util.List;
 
 /**
  * 외부 결제 서버에 결제 요청, 결과 확인, 결제 취소를 요청하는 부분
@@ -53,6 +47,7 @@ public class PaymentServiceImpl implements PaymentService{
      * @return
      */
     @Override
+    @Transactional
     public PaymentStatusDto confirm(PaymentStatusDto dto) throws InterruptedException {
         // 결제 결과를 API로 가져오기
         PaymentStatusDto payResult = getPaymentResult(dto);
@@ -72,7 +67,7 @@ public class PaymentServiceImpl implements PaymentService{
                                 // 결제 id를 가진 주문을 찾기
                                 System.out.println("결제 id가 "+dto.paymentId()+"를 가진 주문을 찾자.");
                                 // 해당 주문에 들어간 상품의 상태를 바꾸기
-                                changeActualProductStatus(dto.paymentId());
+                                orderService.changeActualProductStatus(dto.paymentId());
                                 return payResult;
                             }
                             catch (RuntimeException e){
@@ -92,35 +87,35 @@ public class PaymentServiceImpl implements PaymentService{
         throw new BaseException(BaseResponseStatus.FAIL);
     }
 
-
     @Override
-    public OrderDto result(PaymentStatusDto dto) throws InterruptedException {
-        int patience = 4;
-//        while(patience > 0){
-//            System.out.println("결과 확인 결제 정보 : "+dto);
-//            Order order = null;
-//            try{
-//                order = lockService.executeWithLock(dto.paymentId(), 1,
-//                        () ->
-//                        {
-//                            Order o = orderRepository.findByPaymentId(dto.paymentId())
-//                                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-//                            System.out.println(o.getId()+" : "+o.getOrderStatus());
-//                            return o;
-//                        }
-//                );
-//            }catch (RuntimeException e){
-//                e.printStackTrace();
-//            }
-//            if(order != null && order.getOrderStatus() != OrderStatus.PENDING){
-//                return order.toDto();
-//            }
-//            Thread.sleep(500);
-//            patience--;
-//        }
-//        System.out.println("참을 수 없습니다!!");
-//        throw new BaseException(BaseResponseStatus.FAIL);
-        return null;
+    public OrderDto waitUntilFinish(PaymentStatusDto dto) throws InterruptedException {
+        int patience = 10;
+        while(patience > 0){
+            System.out.println("결과 확인 결제 정보 : "+dto);
+            try{
+                Order order = lockService.executeWithLock(1L, 1,
+                        () ->
+                        {
+                            Order o = orderRepository.findByPaymentId(dto.paymentId())
+                                    .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+                            System.out.println(o.getId()+" : "+o.getOrderStatus());
+                            return o;
+                        }
+                );
+                if(order.getOrderStatus()  != OrderStatus.PENDING){
+                    return order.toDto(); // lazy loading으로 유형 제품 find
+                }
+                else{
+                    throw new BaseException(BaseResponseStatus.ORDER_COMPLETION_YET);
+                }
+            }catch (RuntimeException e){
+                e.printStackTrace();
+                Thread.sleep(1000);
+                patience--;
+            }
+        }
+        System.out.println("참을 수 없습니다!!");
+        throw new BaseException(BaseResponseStatus.FAIL);
     }
 
     private PaymentStatusDto getPaymentResult(PaymentStatusDto dto) {
@@ -134,19 +129,7 @@ public class PaymentServiceImpl implements PaymentService{
         return mono.block();
     }
 
-    @Transactional
-    public void changeActualProductStatus(Long paymentId) {
-        Order order = orderRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        order.setOrderStatus(OrderStatus.FINISH);
-        List<ActualProduct> actualStatusList = orderService.findActualProductsByOrder(order.getId());
-        actualStatusList.forEach(
-                a -> a.updateActualProductStatus(ActualStatus.SHIPPING)
-        );
-        System.out.println("주문 상태 : "+order.getOrderStatus());
-        actualProductRepository.saveAll(actualStatusList);
-        orderRepository.save(order);
-    }
+
 
     @Override
     public PaymentStatusDto cancel(PaymentStatusDto dto) {

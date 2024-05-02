@@ -18,13 +18,10 @@ import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.payment.dto.AbstractPayment;
 import com.concurrency.jpa.customer.payment.dto.PaymentInitialRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
-import com.concurrency.jpa.customer.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +29,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 
 @Service
@@ -45,6 +40,7 @@ public class OrderServiceImpl implements OrderService {
     private final LockService lockService;
     @Value("${payment.server.url}")
     private String paymentURI;
+
     @Override
     @Transactional
     public PaymentStatusDto createOrder(CreateOrderRequestDto createOrderRequestDto){
@@ -66,7 +62,6 @@ public class OrderServiceImpl implements OrderService {
                     Order saved = orderRepository.save(savedOrder);
                     return payPending;
                 });
-
     }
     private PaymentStatusDto pay(PaymentInitialRequestDto dto) {
         Mono<PaymentStatusDto> mono = WebClient.create()
@@ -138,31 +133,47 @@ public class OrderServiceImpl implements OrderService {
      * 결제가 실패했기 때문에 해당 결제 id를 가진 주문의 상품들을 이전 상태로 돌려야한다.
      * @param paymentId
      */
+    @Override
     @Transactional
     public void rollback(Long paymentId) {
         System.out.println("결제 실패 id : "+paymentId);
-        Order order = orderRepository.findByPaymentId(paymentId)
+        Order order = orderRepository.findByPaymentIdWithFetch(paymentId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         order.setOrderStatus(OrderStatus.FAIL);
-        System.out.println("주문 id : "+order.getId());
+        System.out.println("주문 id : "+order.getId()+" 주문 상태 : "+order.getOrderStatus());
         // 유형 상품의 상태를 바꾸기
         // 핵심 상품의 재고를 늘리기
         List<ActualProduct> actualProducts = findActualProductsByOrder(order.getId());
         System.out.println("유형 상품 개수 : "+actualProducts.size());
         actualProducts.forEach(
                 a -> {
-                    a.setOrder(null);
                     a.updateActualProductStatus(ActualStatus.PENDING_ORDER);
                     subtractCoreProductStock(a.getCoreProductId(), -1L);
                 }
         );
-        actualProductRepository.saveAll(actualProducts);
+        order.clearActualProducts();
+        orderRepository.save(order);
+//        actualProductRepository.saveAll(actualProducts);
+
+    }
+    @Override
+    @Transactional
+    public void changeActualProductStatus(Long paymentId) {
+        Order order = orderRepository.findByPaymentIdWithFetch(paymentId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        order.setOrderStatus(OrderStatus.FINISH);
+        List<ActualProduct> actualStatusList = findActualProductsByOrder(order.getId());
+        actualStatusList.forEach(
+                a -> a.updateActualProductStatus(ActualStatus.SHIPPING)
+        );
+        System.out.println("주문 상태 : "+order.getOrderStatus());
+        actualProductRepository.saveAll(actualStatusList);
         orderRepository.save(order);
     }
 
     @Override
     public OrderDto findByPaymentId(long l) {
-        Optional<Order> order = orderRepository.findByPaymentId(l);
+        Optional<Order> order = orderRepository.findByPaymentIdWithFetch(l);
         if(order.isEmpty()){
             System.out.println("빈 객체");
             return null;
@@ -177,7 +188,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public long subtractCoreProductStock(Long coreProductId, Long reqStock){
-        System.out.println("핵심 상품 찾기 전 : "+coreProductId);
         CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         if(reqStock > coreProduct.getStock()){

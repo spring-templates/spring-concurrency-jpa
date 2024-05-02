@@ -31,9 +31,9 @@ public class LockServiceImpl implements LockService{
             try{
                 log.info("lock taken");
                 return supplier.get();
-            }
-            finally {
+            } finally {
                 lock.unlock();
+                log.info("finally unlock");
             }
         }
         else{
