@@ -54,7 +54,7 @@ public class PaymentServiceImpl implements PaymentService{
         int patience = 4;
         while(patience > 0){
             try{
-                return lockService.executeWithLock(1L,
+                return lockService.executeWithLock(dto.buyer().email(),
                         1, () -> {
                             if(payResult.status().equals(PaymentStatus.FAILED)){
                                 System.out.println("결제 결과 : "+payResult);
@@ -93,7 +93,7 @@ public class PaymentServiceImpl implements PaymentService{
         while(patience > 0){
             System.out.println("결과 확인 결제 정보 : "+dto);
             try{
-                Order order = lockService.executeWithLock(1L, 1,
+                Order order = lockService.executeWithLock(dto.buyer().email(), 1,
                         () ->
                         {
                             Order o = orderRepository.findByPaymentId(dto.paymentId())

@@ -33,6 +33,8 @@ public class OrderController {
         URI redirectUri = UriComponentsBuilder.fromUriString("/payments/result")
                 .queryParam("paymentId", paymentRequest.paymentId())
                 .queryParam("status", paymentRequest.status())
+                .queryParam("userEmail", paymentRequest.buyer().email())
+                .queryParam("userName", paymentRequest.buyer().name())
                 .build()
                 .toUri();
         HttpHeaders headers = new HttpHeaders();

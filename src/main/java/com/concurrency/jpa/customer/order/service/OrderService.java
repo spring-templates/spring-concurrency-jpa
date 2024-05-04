@@ -26,7 +26,6 @@ public interface OrderService {
 
     void rollback(Long paymentId);
 
-    @Transactional
     void changeActualProductStatus(Long paymentId);
 
     OrderDto findByPaymentId(long l);

@@ -4,6 +4,7 @@ import com.concurrency.jpa.customer.order.Order;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import com.concurrency.jpa.customer.order.enums.OrderStatus;
 import com.concurrency.jpa.customer.order.enums.PaymentMethods;
+import com.concurrency.jpa.customer.payment.dto.CustomerRequestDto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -27,6 +28,8 @@ public class CreateOrderRequestDto {
     private Map<Long, Long> coreProducts = new HashMap<>();
     @JsonProperty("client_type")
     private Actors clientType;
+    @JsonProperty("buyer")
+    private CustomerRequestDto buyer;
     @JsonProperty("payment_method")
     private PaymentMethods paymentMethod;
 

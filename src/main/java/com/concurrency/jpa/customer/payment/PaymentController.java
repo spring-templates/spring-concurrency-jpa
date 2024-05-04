@@ -2,6 +2,7 @@ package com.concurrency.jpa.customer.payment;
 
 import com.concurrency.jpa.customer.common.BaseException;
 import com.concurrency.jpa.customer.order.dto.OrderDto;
+import com.concurrency.jpa.customer.payment.dto.CustomerRequestDto;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatus;
 import com.concurrency.jpa.customer.payment.dto.PaymentStatusDto;
 import com.concurrency.jpa.customer.payment.service.PaymentService;
@@ -40,8 +41,11 @@ public class PaymentController {
 
     @GetMapping("/result")
     public ResponseEntity<?> result(@RequestParam("paymentId") Long paymentId,
-                                    @RequestParam("status") PaymentStatus status){
-        PaymentStatusDto dto = new PaymentStatusDto(paymentId, status);
+                                    @RequestParam("status") PaymentStatus status,
+                                    @RequestParam("userEmail") String userEmail,
+                                    @RequestParam("userName") String userName){
+        PaymentStatusDto dto = new PaymentStatusDto(paymentId, status,
+                new CustomerRequestDto(userEmail, userName));
         try{
             OrderDto result = paymentService.waitUntilFinish(dto);
             return ResponseEntity.ok(result);

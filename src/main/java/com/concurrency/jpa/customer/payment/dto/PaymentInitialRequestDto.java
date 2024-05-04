@@ -15,9 +15,9 @@ public record PaymentInitialRequestDto(
 ) {
 
 
-    public PaymentInitialRequestDto(AbstractPayment abstractPayment, Long price){
+    public PaymentInitialRequestDto(AbstractPayment abstractPayment, Long price, CustomerRequestDto buyer){
         this(new CustomerRequestDto("abcSeller@gmail.com", "sol sol"),
-            new CustomerRequestDto("abcBuyer@naver.com", "oh sol"),
+                buyer,
                 abstractPayment,
                 price,
             URI.create("http://localhost:8080/payments/confirm"));

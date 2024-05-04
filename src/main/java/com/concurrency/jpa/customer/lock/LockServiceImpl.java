@@ -22,10 +22,10 @@ public class LockServiceImpl implements LockService{
     }
 
     @Override
-    public <T> T executeWithLock(Long paymentId,
+    public <T> T executeWithLock(String email,
                                  int timeoutSeconds,
                                  Supplier<T> supplier) {
-        var lock = lockRegistry.obtain(String.valueOf(paymentId));
+        var lock = lockRegistry.obtain(email);
         boolean lockAcquired =  lock.tryLock();
         if(lockAcquired){
             try{
@@ -42,11 +42,11 @@ public class LockServiceImpl implements LockService{
     }
 
     @Override
-    public <T> void executeWithLock(Long paymentId,
+    public <T> void executeWithLock(String email,
                                     int timeoutSeconds,
                                     T dto,
                                     Consumer<T> consumer) {
-        var lock = lockRegistry.obtain(String.valueOf(paymentId));
+        var lock = lockRegistry.obtain(email);
         boolean lockAcquired =  lock.tryLock();
         if(lockAcquired){
             try{

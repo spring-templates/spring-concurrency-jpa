@@ -46,7 +46,7 @@ public class OrderServiceImpl implements OrderService {
     public PaymentStatusDto createOrder(CreateOrderRequestDto createOrderRequestDto){
         // 유저 권한 확인하기
         checkUserAuthority(createOrderRequestDto.getClientType());
-        return lockService.executeWithLock(1L,
+        return lockService.executeWithLock(createOrderRequestDto.getBuyer().email(),
                 1, () -> {
                     // 재고 확인하고 감소시키기
                     updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
@@ -57,7 +57,8 @@ public class OrderServiceImpl implements OrderService {
                     Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
                     PaymentStatusDto payPending = pay(new PaymentInitialRequestDto(
                             AbstractPayment.valueOf(createOrderRequestDto.getPaymentMethod().name()),
-                            savedOrder.getTotalPrice()));
+                            savedOrder.getTotalPrice(),
+                            createOrderRequestDto.getBuyer()));
                     savedOrder.setPaymentId(payPending.paymentId());
                     Order saved = orderRepository.save(savedOrder);
                     return payPending;
@@ -153,8 +154,6 @@ public class OrderServiceImpl implements OrderService {
         );
         order.clearActualProducts();
         orderRepository.save(order);
-//        actualProductRepository.saveAll(actualProducts);
-
     }
     @Override
     @Transactional
