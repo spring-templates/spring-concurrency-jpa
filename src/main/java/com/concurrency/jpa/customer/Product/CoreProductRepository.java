@@ -13,6 +13,6 @@ import java.util.Optional;
 @Repository
 public interface CoreProductRepository extends JpaRepository<CoreProduct, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select c from CoreProduct c where c.id = :id" ) // 왜 findByTicketName는 직접 못할까?
+    @Query("select c from CoreProduct c where c.id = :id" )
     Optional<CoreProduct> findByIdPessimistic(@Param("id") Long id);
 }

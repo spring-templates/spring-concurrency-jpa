@@ -9,6 +9,7 @@ import com.concurrency.jpa.customer.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,7 +32,7 @@ public class PaymentController {
         try{
             result = paymentService.confirm(dto);
         }
-        catch (BaseException | InterruptedException e){
+        catch (BaseException | InterruptedException | ObjectOptimisticLockingFailureException e){
             throw new RuntimeException(e);
         }
 

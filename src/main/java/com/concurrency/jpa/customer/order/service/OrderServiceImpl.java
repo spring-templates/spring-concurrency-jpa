@@ -90,7 +90,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ActualProduct> concatActualProductList(Map<Long, Long> coreProducts) {
         List<ActualProduct> actualProducts = new ArrayList<>();
         coreProducts.forEach((coreProductId, stock) ->{
@@ -115,19 +115,9 @@ public class OrderServiceImpl implements OrderService {
         return actualProducts;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ActualProduct> findActualProductsByOrder(Long orderId){
         return actualProductRepository.findByOrder_Id(orderId);
-    }
-
-    /**
-     * 요청한 상품의 유형제고가 충분한지 확인
-     * @param requireProducts
-     */
-    @Override
-    @Transactional
-    public void updateCoreProductsStock(Map<Long, Long> requireProducts) {
-        requireProducts.forEach(this::subtractCoreProductStock);
     }
 
     /**
@@ -149,11 +139,12 @@ public class OrderServiceImpl implements OrderService {
         actualProducts.forEach(
                 a -> {
                     a.updateActualProductStatus(ActualStatus.PENDING_ORDER);
-                    subtractCoreProductStock(a.getCoreProductId(), -1L);
+                    subtractCoreProductStockPessimistic(a.getCoreProductId(), -1L);
                 }
         );
         order.clearActualProducts();
         orderRepository.save(order);
+        actualProductRepository.saveAll(actualProducts);
     }
     @Override
     @Transactional
@@ -182,23 +173,36 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    /**
+     * 요청한 상품의 유형제고가 충분한지 확인
+     * @param requireProducts
+     */
+    @Override
+    @Transactional
+    public void updateCoreProductsStock(Map<Long, Long> requireProducts) {
+        requireProducts.forEach(this::subtractCoreProductStockPessimistic);
+    }
+
     ///////////////////////// 재고량 감소
 
     @Override
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional
     public long subtractCoreProductStock(Long coreProductId, Long reqStock){
         CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        System.out.println("감소 전 핵심 상품 재고량 : "+coreProduct.getStock());
         if(reqStock > coreProduct.getStock()){
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
         return coreProduct.addStrock(-reqStock);
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional
     public long subtractCoreProductStockPessimistic(Long coreProductId, Long reqStock){
+        System.out.println("비관적 상품 id "+coreProductId);
         CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        System.out.println("비관적 상품 id "+ coreProduct.getId()+" 감소 전 핵심 상품 재고량 : "+coreProduct.getStock()+" 감소 재고량 : "+reqStock);
         if(reqStock > coreProduct.getStock()){
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
@@ -206,25 +210,31 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public long subtractCoreProductStockOptimistic(Long coreProductId, Long reqStock) throws InterruptedException {
+    public long subtractCoreProductStockOptimistic(Long coreProductId, Long reqStock) {
         int patience = 0;
         while(true){
             try{
-                CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
-                        .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-                if(reqStock > coreProduct.getStock()){
-                    throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
+                try{
+                    CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
+                            .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+                    if(reqStock > coreProduct.getStock()){
+                        throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
+                    }
+                    return coreProduct.addStrock(-reqStock);
                 }
-                return coreProduct.addStrock(-reqStock);
-            }
-            catch(Exception oe){
-                if(patience == 10){
-                    throw new BaseException(BaseResponseStatus.OPTIMISTIC_FAILURE);
+                catch(Exception oe){
+                    if(patience == 10){
+                        throw new BaseException(BaseResponseStatus.OPTIMISTIC_FAILURE);
+                    }
+                    System.out.println("현재까지 "+patience+"번 참음");
+                    patience++;
+                    Thread.sleep(500);
                 }
-                System.out.println("현재까지 "+patience+"번 참음");
-                patience++;
-                Thread.sleep(500);
             }
+            catch(Exception e){
+                throw new RuntimeException(e);
+            }
+
         }
     }
 

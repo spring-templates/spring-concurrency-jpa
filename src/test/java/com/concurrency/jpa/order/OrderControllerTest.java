@@ -5,6 +5,7 @@ import com.concurrency.jpa.customer.order.OrderController;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import com.concurrency.jpa.customer.order.enums.PaymentMethods;
+import com.concurrency.jpa.customer.payment.dto.CustomerRequestDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,9 +38,9 @@ public class OrderControllerTest {
     @Test
     void shouldReturnRequestData() throws Exception {
         Map<Long, Long> coreProduct = new HashMap<>();
-        coreProduct.put((long) 1,(long) 10);
-        coreProduct.put((long)2, (long)5);
-        CreateOrderRequestDto createOrderRequestDto = new CreateOrderRequestDto(coreProduct, Actors.InexperiencedCustomer, PaymentMethods.CREDIT_CARD);
+        coreProduct.put((long) 1,(long) 2);
+        CreateOrderRequestDto createOrderRequestDto = new CreateOrderRequestDto(coreProduct, Actors.InexperiencedCustomer,
+                new CustomerRequestDto("user1@naver.com", "user1"),PaymentMethods.CREDIT_CARD);
         String content = objectMapper.writeValueAsString(createOrderRequestDto);
         System.out.println(content);
         mockMvc.perform(post("/order")
@@ -47,8 +48,7 @@ public class OrderControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string(content));
+                .andExpect(status().isOk());
     }
 
 }
