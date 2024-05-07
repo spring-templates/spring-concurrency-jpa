@@ -23,6 +23,7 @@ public class ActualProduct {
     @Column(name = "actual_status", columnDefinition = "varchar(255)")
     private ActualStatus actualStatus;
 
+    @Getter
     @ManyToOne
     @JoinColumn(name = "core_product_id", nullable = false)
     private CoreProduct coreProduct;

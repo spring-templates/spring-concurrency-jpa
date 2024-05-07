@@ -43,7 +43,7 @@ public class ConcurrentOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct1);
         CoreProduct coreProduct2 = CoreProduct.builder()
@@ -51,7 +51,7 @@ public class ConcurrentOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct2);
         CoreProduct coreProduct3 = CoreProduct.builder()
@@ -59,7 +59,7 @@ public class ConcurrentOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct3);
         CoreProduct coreProduct4 = CoreProduct.builder()
@@ -67,7 +67,7 @@ public class ConcurrentOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct4);
     }
@@ -145,7 +145,7 @@ public class ConcurrentOrderServiceTest {
     }
 
     @Test
-    @DisplayName("멀티스레드로 재고 감소, 비관적 락으로 경쟁 상태 제거")
+    @DisplayName("멀티스레드로 재고 증가, 비관적 락으로 경쟁 상태 제거")
     public void givenMultiThreadAndTransaction_whenUpdated_thenPessimistic_Success() throws InterruptedException {
         Long coreProductId = 4L;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -157,7 +157,7 @@ public class ConcurrentOrderServiceTest {
         for (int i = 0; i < requestCount; i++) { // wating time일 수 있다.
             executorService.submit(() -> { // submit 안에 함수는 스레드가 실행시킴
                 try {
-                    orderService.subtractCoreProductStockPessimistic(coreProductId, 1L); // 티켓 수량 감소
+                    orderService.subtractCoreProductStockPessimistic(coreProductId, -1L); // 티켓 수량 증가
                 } catch (Exception e){
                     System.out.println(e.getMessage());
                 }
@@ -170,6 +170,6 @@ public class ConcurrentOrderServiceTest {
 
         Long result = coreProductRepository.findById(coreProductId).orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다.")).getStock();
         System.out.println("티켓 수량 : "+result);
-        Assertions.assertEquals(0L, result);
+        Assertions.assertEquals(ACTUAL_STOCK + requestCount, result);
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -106,7 +107,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock){
         List<ActualProduct> actualProducts = actualProductRepository.findByCoreProduct_IdAndActualStatus(
                 coreProductId,
@@ -117,35 +118,14 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     public List<ActualProduct> findActualProductsByOrder(Long orderId){
-        return actualProductRepository.findByOrder_Id(orderId);
+        return actualProductRepository.findByOrder_IdPessimistic(orderId);
     }
 
     /**
      * 결제가 실패했기 때문에 해당 결제 id를 가진 주문의 상품들을 이전 상태로 돌려야한다.
      * @param paymentId
      */
-    @Override
-    @Transactional
-    public void rollback(Long paymentId) {
-        System.out.println("결제 실패 id : "+paymentId);
-        Order order = orderRepository.findByPaymentIdWithFetch(paymentId)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        order.setOrderStatus(OrderStatus.FAIL);
-        System.out.println("주문 id : "+order.getId()+" 주문 상태 : "+order.getOrderStatus());
-        // 유형 상품의 상태를 바꾸기
-        // 핵심 상품의 재고를 늘리기
-        List<ActualProduct> actualProducts = findActualProductsByOrder(order.getId());
-        System.out.println("유형 상품 개수 : "+actualProducts.size());
-        actualProducts.forEach(
-                a -> {
-                    a.updateActualProductStatus(ActualStatus.PENDING_ORDER);
-                    subtractCoreProductStockPessimistic(a.getCoreProductId(), -1L);
-                }
-        );
-        order.clearActualProducts();
-        orderRepository.save(order);
-        actualProductRepository.saveAll(actualProducts);
-    }
+
     @Override
     @Transactional
     public void changeActualProductStatus(Long paymentId) {
@@ -156,7 +136,6 @@ public class OrderServiceImpl implements OrderService {
         actualStatusList.forEach(
                 a -> a.updateActualProductStatus(ActualStatus.SHIPPING)
         );
-        System.out.println("주문 상태 : "+order.getOrderStatus());
         actualProductRepository.saveAll(actualStatusList);
         orderRepository.save(order);
     }
@@ -165,12 +144,29 @@ public class OrderServiceImpl implements OrderService {
     public OrderDto findByPaymentId(long l) {
         Optional<Order> order = orderRepository.findByPaymentIdWithFetch(l);
         if(order.isEmpty()){
-            System.out.println("빈 객체");
             return null;
         }
         else{
             return order.get().toDto();
         }
+    }
+
+    @Override
+    @Transactional
+    public void rollback(Long paymentId) {
+        Order order = orderRepository.findByPaymentIdWithFetch(paymentId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        order.setOrderStatus(OrderStatus.FAIL);
+        Map<Long, Long> coreCntMap = new HashMap<>();
+        order.getActualProducts().forEach(
+                a -> {
+                    a.updateActualProductStatus(ActualStatus.PENDING_ORDER);
+                    coreCntMap.put(a.getCoreProductId(),
+                            coreCntMap.getOrDefault(a.getCoreProductId(), 0L) - 1);
+                }
+        );
+        updateCoreProductsStock(coreCntMap);
+        order.clearActualProducts();
     }
 
     /**
@@ -190,20 +186,18 @@ public class OrderServiceImpl implements OrderService {
     public long subtractCoreProductStock(Long coreProductId, Long reqStock){
         CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        System.out.println("감소 전 핵심 상품 재고량 : "+coreProduct.getStock());
-        if(reqStock > coreProduct.getStock()){
+        if (reqStock > coreProduct.getStock()) {
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
         return coreProduct.addStrock(-reqStock);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public long subtractCoreProductStockPessimistic(Long coreProductId, Long reqStock){
-        System.out.println("비관적 상품 id "+coreProductId);
         CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        System.out.println("비관적 상품 id "+ coreProduct.getId()+" 감소 전 핵심 상품 재고량 : "+coreProduct.getStock()+" 감소 재고량 : "+reqStock);
-        if(reqStock > coreProduct.getStock()){
+        long stock = coreProduct.getStock();
+        if(reqStock > stock){
             throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
         }
         return coreProduct.addStrock(-reqStock);
@@ -215,7 +209,7 @@ public class OrderServiceImpl implements OrderService {
         while(true){
             try{
                 try{
-                    CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
+                    CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
                             .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
                     if(reqStock > coreProduct.getStock()){
                         throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
@@ -226,7 +220,6 @@ public class OrderServiceImpl implements OrderService {
                     if(patience == 10){
                         throw new BaseException(BaseResponseStatus.OPTIMISTIC_FAILURE);
                     }
-                    System.out.println("현재까지 "+patience+"번 참음");
                     patience++;
                     Thread.sleep(500);
                 }

@@ -38,7 +38,7 @@ public class DistributeLockOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct1);
         CoreProduct coreProduct2 = CoreProduct.builder()
@@ -46,7 +46,7 @@ public class DistributeLockOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct2);
         CoreProduct coreProduct3 = CoreProduct.builder()
@@ -54,7 +54,7 @@ public class DistributeLockOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct3);
         CoreProduct coreProduct4 = CoreProduct.builder()
@@ -62,7 +62,7 @@ public class DistributeLockOrderServiceTest {
                 .price((long) 10000)
                 .stock((long) ACTUAL_STOCK)
                 .sellerId((long) 1)
-                .version((long) 1)
+//                .version((long) 1)
                 .build();
         coreProductRepository.save(coreProduct4);
     }
@@ -134,7 +134,7 @@ public class DistributeLockOrderServiceTest {
     }
 
     @Test
-    @DisplayName("분산락을 서로 다른 쓰레드가 획득할 수 있는지 체크")
+    @DisplayName("같은 분산락을 서로 다른 쓰레드가 획득할 수 있는지 체크")
     public void GivenDistributeLock_Share_Other_Success() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         CountDownLatch latch1 = new CountDownLatch(1);
@@ -182,6 +182,58 @@ public class DistributeLockOrderServiceTest {
         log.info("티켓 수량 : "+result);
         Assertions.assertEquals(ACTUAL_STOCK-2, result);
     }
+
+    @Test
+    @DisplayName("다른 분산락이 같은 레코드에 적용될 때 비관적락을 써야 동시성 문제 해결?")
+    public void Given_Difference_DistributeLock_Share_Other_PESSIMISTIC_SUCESS() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        CountDownLatch latch1 = new CountDownLatch(1);
+        Long coreProductId = 1L;
+        Runnable lockThreadOne = () -> {
+            UUID uuid = UUID.randomUUID();
+            log.info("task start thread: " + uuid);
+            try {
+                lockService.executeWithLock("user1@naver.com",
+                        1,
+                        ()-> orderService.subtractCoreProductStockPessimistic(coreProductId, 1L));
+            }
+            catch (Exception e0) {
+                e0.printStackTrace();
+                log.info("exception thrown with thread: " + uuid);
+                throw e0;
+            }
+            finally {
+                latch1.countDown();
+            }
+        };
+        executorService.submit(lockThreadOne);
+
+
+        CountDownLatch latch2 = new CountDownLatch(1);
+        Runnable lockThreadTwo = () -> {
+            UUID uuid = UUID.randomUUID();
+            log.info("task start thread: " + uuid);
+            try {
+                lockService.executeWithLock("user2@naver.com",
+                        1,
+                        ()-> orderService.subtractCoreProductStockPessimistic(coreProductId, 1L));
+            }catch (Exception e0) {
+                e0.printStackTrace();
+                log.info("exception thrown with thread: " + uuid);
+                throw e0;
+            }finally {
+                latch2.countDown();
+            }
+        };
+        executorService.submit(lockThreadTwo);
+        latch1.await();
+        latch2.await();
+        Long result = coreProductRepository.findById(coreProductId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다.")).getStock();
+        log.info("티켓 수량 : "+result);
+        Assertions.assertEquals(ACTUAL_STOCK-2, result);
+    }
+
 
     @Test
     @DisplayName("트랜젝션이 끝나고 분산락을 해제하기 전에 예외가 발생한다면 트랜젝션도 롤백되지 않음")

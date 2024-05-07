@@ -48,7 +48,7 @@ public class PaymentServiceImpl implements PaymentService{
      * @return
      */
     @Override
-    @Transactional
+//    @Transactional
     public PaymentStatusDto confirm(PaymentStatusDto dto) throws InterruptedException {
         // 결제 결과를 API로 가져오기
         PaymentStatusDto payResult = getPaymentResult(dto);
@@ -58,7 +58,6 @@ public class PaymentServiceImpl implements PaymentService{
                 return lockService.executeWithLock(dto.buyer().email(),
                         1, () -> {
                             if(payResult.status().equals(PaymentStatus.FAILED)){
-                                System.out.println("결제 결과 : "+payResult);
                                 // 결제 실패한 경우
                                 orderService.rollback(dto.paymentId());
                                 return payResult;
@@ -66,7 +65,6 @@ public class PaymentServiceImpl implements PaymentService{
                             try{
                                 // 결제 성공한 경우
                                 // 결제 id를 가진 주문을 찾기
-                                System.out.println("결제 id가 "+dto.paymentId()+"를 가진 주문을 찾자.");
                                 // 해당 주문에 들어간 상품의 상태를 바꾸기
                                 orderService.changeActualProductStatus(dto.paymentId());
                                 return payResult;
