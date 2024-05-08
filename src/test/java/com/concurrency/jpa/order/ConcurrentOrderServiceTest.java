@@ -1,11 +1,13 @@
 package com.concurrency.jpa.order;
 
 import com.concurrency.jpa.customer.Product.CoreProductRepository;
+import com.concurrency.jpa.customer.Product.ProductService;
 import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.lock.LockService;
 import com.concurrency.jpa.customer.order.dto.CreateOrderRequestDto;
 import com.concurrency.jpa.customer.order.enums.Actors;
 import com.concurrency.jpa.customer.order.enums.PaymentMethods;
+import com.concurrency.jpa.customer.order.service.OrderService;
 import com.concurrency.jpa.customer.order.service.OrderServiceImpl;
 import org.aspectj.lang.annotation.RequiredTypes;
 import org.junit.jupiter.api.*;
@@ -27,7 +29,9 @@ import java.util.concurrent.Executors;
 public class ConcurrentOrderServiceTest {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
     @Autowired
-    OrderServiceImpl orderService;
+    OrderService orderService;
+    @Autowired
+    ProductService productService;
     @Autowired
     CoreProductRepository coreProductRepository;
     @Autowired
@@ -82,7 +86,7 @@ public class ConcurrentOrderServiceTest {
         System.out.println("시작 상품 재고 : "+coreProduct1.getStock());
 
         // when
-        orderService.subtractCoreProductStock(coreProductId, 1L);
+        productService.subtractCoreProductStock(coreProductId, 1L);
 
         // then
         CoreProduct coreProduct2 = coreProductRepository.findById(coreProductId).orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다."));
@@ -102,7 +106,7 @@ public class ConcurrentOrderServiceTest {
         for (int i = 0; i < requestCount; i++) {
             executorService.submit(() -> {
                 try {
-                    orderService.subtractCoreProductStock(coreProductId, 1L);
+                    productService.subtractCoreProductStock(coreProductId, 1L);
                 } catch (Exception e){
                     System.out.println(e.getMessage());
                 }
@@ -129,7 +133,7 @@ public class ConcurrentOrderServiceTest {
         for (int i = 0; i < requestCount; i++) {
             executorService.submit(() -> {
                 try {
-                    orderService.subtractCoreProductStockOptimistic(coreProductId, 1L);
+                    productService.subtractCoreProductStockOptimistic(coreProductId, 1L);
                 } catch (Exception e){
                     System.out.println(e.getMessage());
                 }
@@ -157,7 +161,7 @@ public class ConcurrentOrderServiceTest {
         for (int i = 0; i < requestCount; i++) { // wating time일 수 있다.
             executorService.submit(() -> { // submit 안에 함수는 스레드가 실행시킴
                 try {
-                    orderService.subtractCoreProductStockPessimistic(coreProductId, -1L); // 티켓 수량 증가
+                    productService.subtractCoreProductStockPessimistic(coreProductId, -1L); // 티켓 수량 증가
                 } catch (Exception e){
                     System.out.println(e.getMessage());
                 }

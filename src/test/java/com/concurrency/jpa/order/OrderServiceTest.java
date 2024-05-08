@@ -2,6 +2,7 @@ package com.concurrency.jpa.order;
 
 import com.concurrency.jpa.customer.Product.ActualProductRepository;
 import com.concurrency.jpa.customer.Product.CoreProductRepository;
+import com.concurrency.jpa.customer.Product.ProductService;
 import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
@@ -31,8 +32,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
+
     @InjectMocks
-    OrderServiceImpl orderService;
+    ProductService productService;
     @Mock
     ActualProductRepository actualProductRepository;
     @Mock
@@ -75,7 +77,7 @@ public class OrderServiceTest {
     public void Update_CoreStock_Success(){
         when(coreProductRepository.findById((long) 1))
                 .thenReturn(Optional.of(coreProduct));
-        Assertions.assertEquals(1, orderService.subtractCoreProductStock((long) 1, (long) 2));
+        Assertions.assertEquals(1, productService.subtractCoreProductStock((long) 1, (long) 2));
     }
 
     @Test
@@ -83,7 +85,7 @@ public class OrderServiceTest {
         when(coreProductRepository.findById((long) 1))
                 .thenReturn(Optional.of(coreProduct));
         Exception exception = Assertions.assertThrows(BaseException.class,
-                () -> orderService.subtractCoreProductStock((long) 1, (long) 4));
+                () -> productService.subtractCoreProductStock((long) 1, (long) 4));
 
         Assertions.assertTrue(exception.getMessage().contains("재고가 충분하지 않습니다."));
     }
@@ -97,7 +99,7 @@ public class OrderServiceTest {
                 .thenReturn(actualProducts);
         Map<Long, Long> requireStock = new HashMap<>();
         requireStock.put((long) 1, (long) 3);
-        Assertions.assertEquals(3, orderService.findActualProducts(
+        Assertions.assertEquals(3, productService.findActualProducts(
                 (long) 1,
                 ActualStatus.PENDING_ORDER,
                 (long) 3
@@ -108,7 +110,7 @@ public class OrderServiceTest {
     public void shouldProductStockException(){
         Map<Long, Long> requireStock = new HashMap<>();
         requireStock.put((long) 1, (long) 10);
-        Assertions.assertThrows(BaseException.class, () -> orderService.updateCoreProductsStock(requireStock));
+        Assertions.assertThrows(BaseException.class, () -> productService.updateCoreProductsStock(requireStock));
     }
 
 

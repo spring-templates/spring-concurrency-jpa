@@ -16,19 +16,10 @@ public interface OrderService {
     PaymentStatusDto createOrder(CreateOrderRequestDto createOrderRequestDto);
     Order getOrder(CreateOrderRequestDto createOrderRequestDto, List<ActualProduct> actualProducts);
 
-    List<ActualProduct> concatActualProductList(Map<Long, Long> coreProducts);
-
-    List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock);
-
-    void updateCoreProductsStock(Map<Long, Long> requireProducts);
-
-    long subtractCoreProductStock(Long coreProductId, Long reqStock);
-
     void rollback(Long paymentId);
 
     void changeActualProductStatus(Long paymentId);
 
     OrderDto findByPaymentId(long l);
 
-    List<ActualProduct> findActualProductsByOrder(Long orderId);
 }

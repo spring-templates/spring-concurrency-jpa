@@ -3,6 +3,7 @@ package com.concurrency.jpa.customer.order.service;
 
 import com.concurrency.jpa.customer.Product.ActualProductRepository;
 import com.concurrency.jpa.customer.Product.CoreProductRepository;
+import com.concurrency.jpa.customer.Product.ProductService;
 import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
@@ -36,8 +37,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
-    private final ActualProductRepository actualProductRepository;
-    private final CoreProductRepository coreProductRepository;
+    private final ProductService productService;
     private final LockService lockService;
     @Value("${payment.server.url}")
     private String paymentURI;
@@ -50,9 +50,9 @@ public class OrderServiceImpl implements OrderService {
         return lockService.executeWithLock(createOrderRequestDto.getBuyer().email(),
                 1, () -> {
                     // 재고 확인하고 감소시키기
-                    updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
+                    productService.updateCoreProductsStock(createOrderRequestDto.getCoreProducts());
                     // 유형제품 찾기
-                    List<ActualProduct> actualProducts = concatActualProductList(createOrderRequestDto.getCoreProducts());
+                    List<ActualProduct> actualProducts = productService.concatActualProductList(createOrderRequestDto.getCoreProducts());
                     // 주문 생성
                     // 주문과 유형제품 연결 & 유형제품 상태 업데이트
                     Order savedOrder = getOrder(createOrderRequestDto, actualProducts);
@@ -61,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
                             savedOrder.getTotalPrice(),
                             createOrderRequestDto.getBuyer()));
                     savedOrder.setPaymentId(payPending.paymentId());
-                    Order saved = orderRepository.save(savedOrder);
+                    orderRepository.save(savedOrder);
                     return payPending;
                 });
     }
@@ -92,64 +92,21 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public List<ActualProduct> concatActualProductList(Map<Long, Long> coreProducts) {
-        List<ActualProduct> actualProducts = new ArrayList<>();
-        coreProducts.forEach((coreProductId, stock) ->{
-                    actualProducts.addAll(
-                            findActualProducts(
-                                    coreProductId,
-                                    ActualStatus.PENDING_ORDER,
-                                    stock));
-                }
-
+    public void changeActualProductStatus(Long paymentId) {
+        Order order = orderRepository.findByPaymentIdWithFetch(paymentId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
+        order.setOrderStatus(OrderStatus.FINISH);
+//        List<ActualProduct> actualStatusList = findActualProductsByOrder(order.getId());
+        order.getActualProducts().forEach(
+                a -> a.updateActualProductStatus(ActualStatus.SHIPPING)
         );
-        return actualProducts;
     }
 
-    @Override
-    @Transactional
-    public List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock){
-        List<ActualProduct> actualProducts = actualProductRepository.findByCoreProduct_IdAndActualStatus(
-                coreProductId,
-                actualStatus,
-                PageRequest.of(0, Math.toIntExact(stock)));
-        return actualProducts;
-    }
-
-    @Transactional
-    public List<ActualProduct> findActualProductsByOrder(Long orderId){
-        return actualProductRepository.findByOrder_IdPessimistic(orderId);
-    }
 
     /**
      * 결제가 실패했기 때문에 해당 결제 id를 가진 주문의 상품들을 이전 상태로 돌려야한다.
      * @param paymentId
      */
-
-    @Override
-    @Transactional
-    public void changeActualProductStatus(Long paymentId) {
-        Order order = orderRepository.findByPaymentIdWithFetch(paymentId)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        order.setOrderStatus(OrderStatus.FINISH);
-        List<ActualProduct> actualStatusList = findActualProductsByOrder(order.getId());
-        actualStatusList.forEach(
-                a -> a.updateActualProductStatus(ActualStatus.SHIPPING)
-        );
-        actualProductRepository.saveAll(actualStatusList);
-        orderRepository.save(order);
-    }
-
-    @Override
-    public OrderDto findByPaymentId(long l) {
-        Optional<Order> order = orderRepository.findByPaymentIdWithFetch(l);
-        if(order.isEmpty()){
-            return null;
-        }
-        else{
-            return order.get().toDto();
-        }
-    }
 
     @Override
     @Transactional
@@ -165,69 +122,18 @@ public class OrderServiceImpl implements OrderService {
                             coreCntMap.getOrDefault(a.getCoreProductId(), 0L) - 1);
                 }
         );
-        updateCoreProductsStock(coreCntMap);
+        productService.updateCoreProductsStock(coreCntMap);
         order.clearActualProducts();
     }
 
-    /**
-     * 요청한 상품의 유형제고가 충분한지 확인
-     * @param requireProducts
-     */
     @Override
-    @Transactional
-    public void updateCoreProductsStock(Map<Long, Long> requireProducts) {
-        requireProducts.forEach(this::subtractCoreProductStockPessimistic);
-    }
-
-    ///////////////////////// 재고량 감소
-
-    @Override
-    @Transactional
-    public long subtractCoreProductStock(Long coreProductId, Long reqStock){
-        CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        if (reqStock > coreProduct.getStock()) {
-            throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
+    public OrderDto findByPaymentId(long l) {
+        Optional<Order> order = orderRepository.findByPaymentIdWithFetch(l);
+        if(order.isEmpty()){
+            return null;
         }
-        return coreProduct.addStrock(-reqStock);
-    }
-
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public long subtractCoreProductStockPessimistic(Long coreProductId, Long reqStock){
-        CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-        long stock = coreProduct.getStock();
-        if(reqStock > stock){
-            throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
-        }
-        return coreProduct.addStrock(-reqStock);
-    }
-
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public long subtractCoreProductStockOptimistic(Long coreProductId, Long reqStock) {
-        int patience = 0;
-        while(true){
-            try{
-                try{
-                    CoreProduct coreProduct = coreProductRepository.findById(coreProductId)
-                            .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
-                    if(reqStock > coreProduct.getStock()){
-                        throw new BaseException(BaseResponseStatus.NOT_ENOUGH_STOCK);
-                    }
-                    return coreProduct.addStrock(-reqStock);
-                }
-                catch(Exception oe){
-                    if(patience == 10){
-                        throw new BaseException(BaseResponseStatus.OPTIMISTIC_FAILURE);
-                    }
-                    patience++;
-                    Thread.sleep(500);
-                }
-            }
-            catch(Exception e){
-                throw new RuntimeException(e);
-            }
-
+        else{
+            return order.get().toDto();
         }
     }
 

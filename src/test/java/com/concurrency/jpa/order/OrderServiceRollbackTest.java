@@ -2,6 +2,7 @@ package com.concurrency.jpa.order;
 
 import com.concurrency.jpa.customer.Product.ActualProductRepository;
 import com.concurrency.jpa.customer.Product.CoreProductRepository;
+import com.concurrency.jpa.customer.Product.ProductService;
 import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
@@ -34,6 +35,8 @@ public class OrderServiceRollbackTest {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
     @Autowired
     OrderServiceImpl orderService;
+    @Autowired
+    ProductService productService;
     @Autowired
     CoreProductRepository coreProductRepository;
     @Autowired
@@ -178,7 +181,7 @@ public class OrderServiceRollbackTest {
             long finalI = i;
             executorService.submit(() -> {
                 try {
-                    orderService.updateCoreProductsStock(coreMap);
+                    productService.updateCoreProductsStock(coreMap);
                 } catch (Exception e){
                     System.out.println(e.getMessage());
                 }

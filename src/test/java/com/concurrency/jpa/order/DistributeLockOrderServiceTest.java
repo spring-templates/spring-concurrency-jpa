@@ -1,9 +1,11 @@
 package com.concurrency.jpa.order;
 
 import com.concurrency.jpa.customer.Product.CoreProductRepository;
+import com.concurrency.jpa.customer.Product.ProductService;
 import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.lock.LockService;
 import com.concurrency.jpa.customer.order.enums.Actors;
+import com.concurrency.jpa.customer.order.service.OrderService;
 import com.concurrency.jpa.customer.order.service.OrderServiceImpl;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -22,7 +24,9 @@ import java.util.concurrent.Executors;
 public class DistributeLockOrderServiceTest {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
     @Autowired
-    OrderServiceImpl orderService;
+    OrderService orderService;
+    @Autowired
+    ProductService productService;
     @Autowired
     CoreProductRepository coreProductRepository;
     @Autowired
@@ -77,7 +81,7 @@ public class DistributeLockOrderServiceTest {
         System.out.println("시작 상품 재고 : "+coreProduct1.getStock());
 
         // when
-        orderService.subtractCoreProductStock(coreProductId, 1L);
+        productService.subtractCoreProductStock(coreProductId, 1L);
 
         // then
         CoreProduct coreProduct2 = coreProductRepository.findById(coreProductId).orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다."));
@@ -97,7 +101,7 @@ public class DistributeLockOrderServiceTest {
             try {
                 lockService.executeWithLock("user@naver.com",
                         1,
-                        ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
+                        ()-> productService.subtractCoreProductStock(coreProductId, 1L));
             }
             catch (Exception e0) {
                 e0.printStackTrace();
@@ -115,7 +119,7 @@ public class DistributeLockOrderServiceTest {
             try {
                 lockService.executeWithLock("user@naver.com",
                         1,
-                        ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
+                        ()-> productService.subtractCoreProductStock(coreProductId, 1L));
             }catch (Exception e0) {
                 e0.printStackTrace();
                 log.info("exception thrown with thread: " + uuid);
@@ -145,7 +149,7 @@ public class DistributeLockOrderServiceTest {
             try {
                 lockService.executeWithLock("user@naver.com",
                         1,
-                        ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
+                        ()-> productService.subtractCoreProductStock(coreProductId, 1L));
             }
             catch (Exception e0) {
                 e0.printStackTrace();
@@ -166,7 +170,7 @@ public class DistributeLockOrderServiceTest {
             try {
                 lockService.executeWithLock("user@naver.com",
                         1,
-                        ()-> orderService.subtractCoreProductStock(coreProductId, 1L));
+                        ()-> productService.subtractCoreProductStock(coreProductId, 1L));
             }catch (Exception e0) {
                 e0.printStackTrace();
                 log.info("exception thrown with thread: " + uuid);
@@ -195,7 +199,7 @@ public class DistributeLockOrderServiceTest {
             try {
                 lockService.executeWithLock("user1@naver.com",
                         1,
-                        ()-> orderService.subtractCoreProductStockPessimistic(coreProductId, 1L));
+                        ()-> productService.subtractCoreProductStockPessimistic(coreProductId, 1L));
             }
             catch (Exception e0) {
                 e0.printStackTrace();
@@ -216,7 +220,7 @@ public class DistributeLockOrderServiceTest {
             try {
                 lockService.executeWithLock("user2@naver.com",
                         1,
-                        ()-> orderService.subtractCoreProductStockPessimistic(coreProductId, 1L));
+                        ()-> productService.subtractCoreProductStockPessimistic(coreProductId, 1L));
             }catch (Exception e0) {
                 e0.printStackTrace();
                 log.info("exception thrown with thread: " + uuid);
@@ -248,7 +252,7 @@ public class DistributeLockOrderServiceTest {
                 lockService.executeWithLock("user@naver.com",
                         1,
                         ()-> {
-                            orderService.subtractCoreProductStock(coreProductId, 1L);
+                            productService.subtractCoreProductStock(coreProductId, 1L);
                             throw new RuntimeException("강제 예외 발생");
                         });
             }
@@ -282,7 +286,7 @@ public class DistributeLockOrderServiceTest {
                 lockService.executeWithLock("user@naver.com",
                         1,
                         ()-> {
-                            orderService.subtractCoreProductStock(coreProductId, 1L);
+                            productService.subtractCoreProductStock(coreProductId, 1L);
                             throw new RuntimeException("강제 예외 발생");
                         });
             }
