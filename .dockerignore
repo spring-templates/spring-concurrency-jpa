@@ -4,7 +4,7 @@
 .env.local
 .gitignore
 README.md
-.gitmessage
+.gitmessage.txt
 LICENSE
 SunStyle_edited.xml
 codecov.yml

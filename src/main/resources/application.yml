@@ -7,11 +7,21 @@
 
 # Core configuration
 spring.application.name: spring-web-jpa-concurrency
-spring.profiles.active: default, dev, init-sql
+spring.profiles.active: default, dev #, init-sql
 
 # Database configuration
 spring.datasource:
-  url: jdbc:mysql://${MYSQL_SERVER}:3306/${MYSQL_DATABASE}
-  username: ${MYSQL_USER}
-  password: ${MYSQL_PASSWORD}
+  url: jdbc:mysql://localhost:3306/jpa-concurrency
+  username: chansol
+  password: solsol
   driver-class-name: com.mysql.cj.jdbc.Driver
+
+# Hibernate Cache hit statistics
+hibernate:
+  cache:
+    use_query_cache=true:
+
+# Payment Server url
+payment.server.url: http://localhost:8081 # http://13.125.145.9:8080/
+# My Public ip
+my.public.ip: http://localhost:8080
