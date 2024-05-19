@@ -21,8 +21,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    networks:
-      - private-subnet
+#    networks:
+#      - private-subnet
 
   mysql:
     <<: *mysql-template
@@ -30,13 +30,13 @@ services:
     container_name: mysql-dev
     ports:
       - "3306:3306"
-    networks:
-      - private-subnet
-
-networks:
-  private-subnet: # private: 172.19.0.x
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.19.0.0/24
+#    networks:
+#      - private-subnet
+#
+#networks:
+#  private-subnet: # private: 172.19.0.x
+#    driver: bridge
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.19.0.0/24

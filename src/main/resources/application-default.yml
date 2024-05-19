@@ -8,10 +8,10 @@
 # JPA configuration
 spring.jpa:
   open-in-view: false
-  show-sql: false
+  show-sql: true
   ## Hibernate native properties
   properties.hibernate:
-    format-sql: false
+    format-sql: true
     use_sql_comments: false
     generate_statistics: false
     id.new_generator_mappings: false

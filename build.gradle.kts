@@ -23,6 +23,16 @@ repositories {
 }
 
 @Suppress("SpellCheckingInspection") dependencies {
+    // spring-distribute-lock
+    implementation("org.springframework.integration:spring-integration-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-integration")
+
+    // spring-web-payment
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0")
+    runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.94.Final:osx-aarch_64")
+
     // spring-web-jpa-concurrency
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
