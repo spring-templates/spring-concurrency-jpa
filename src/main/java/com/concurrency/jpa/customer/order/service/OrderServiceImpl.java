@@ -4,6 +4,7 @@ package com.concurrency.jpa.customer.order.service;
 import com.concurrency.jpa.customer.Product.ActualProductRepository;
 import com.concurrency.jpa.customer.Product.CoreProductRepository;
 import com.concurrency.jpa.customer.Product.ProductService;
+import com.concurrency.jpa.customer.Product.dto.OrderCoreProductStockDto;
 import com.concurrency.jpa.customer.Product.entity.ActualProduct;
 import com.concurrency.jpa.customer.Product.entity.CoreProduct;
 import com.concurrency.jpa.customer.Product.enums.ActualStatus;
@@ -102,26 +103,31 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-
     /**
      * 결제가 실패했기 때문에 해당 결제 id를 가진 주문의 상품들을 이전 상태로 돌려야한다.
+     * 주문, 유형, 핵심 모두 fetch join으로 한번에 가져옴 + 비관적 락
+     * => 유형 상품 데이터는 사용하지 않을 건데 패치되어 가져오는건 비효율적이다.
+     * DTO Projection을 이용해 필요한 데이터만 가져와서 처리할 수 있다.
+     *
      * @param paymentId
      */
-
     @Override
     @Transactional
     public void rollback(Long paymentId) {
-        Order order = orderRepository.findByPaymentIdWithFetch(paymentId)
+        Order order = orderRepository.findByPaymentId(paymentId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         order.setOrderStatus(OrderStatus.FAIL);
-        Map<Long, Long> coreCntMap = new HashMap<>();
         order.getActualProducts().forEach(
                 a -> {
                     a.updateActualProductStatus(ActualStatus.PENDING_ORDER);
-                    coreCntMap.put(a.getCoreProductId(),
-                            coreCntMap.getOrDefault(a.getCoreProductId(), 0L) - 1);
                 }
         );
+        Map<Long, Long> coreCntMap = new HashMap<>();
+        List<OrderCoreProductStockDto> coreMap = orderRepository.findCoreProductStockByOrderId(order.getId());
+        for(OrderCoreProductStockDto o : coreMap){
+            System.out.println(o.getCoreProductId()+" : "+o.getReduceStock());
+            coreCntMap.put(o.getCoreProductId(), -1*o.getReduceStock());
+        }
         productService.updateCoreProductsStock(coreCntMap);
         order.clearActualProducts();
     }

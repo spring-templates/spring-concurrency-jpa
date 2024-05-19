@@ -19,12 +19,13 @@ public class ActualProduct {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Getter
     @Enumerated(EnumType.STRING)
     @Column(name = "actual_status", columnDefinition = "varchar(255)")
     private ActualStatus actualStatus;
 
     @Getter
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "core_product_id", nullable = false)
     private CoreProduct coreProduct;
 

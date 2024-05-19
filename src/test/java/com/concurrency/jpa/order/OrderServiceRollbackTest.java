@@ -90,45 +90,10 @@ public class OrderServiceRollbackTest {
         orderRepository.saveAll(orders);
     }
 
-    @Test
-    @DisplayName("멀티스레드로 롤백 -> 핵심 상품 재고 롤백 실패")
-    public void givenMultiThreadAndTransaction_whenUpdated_thenFAIL() throws InterruptedException {
-        setup();
-        Long coreProductId = 1L;
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch countDownLatch = new CountDownLatch(requestCount);
-        CoreProduct coreProduct = coreProductRepository.findById(coreProductId).orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다."));
-        log.info("초기 상품 재고량 : "+coreProduct.getStock());
-
-        for (long i = 1; i <= requestCount; i++) {
-            long finalI = i;
-            executorService.submit(() -> {
-                try {
-
-//                    log.info(order.getPaymentId()+" "+order.getActualProducts().size());
-                    orderService.rollback(finalI);
-                } catch (Exception e){
-                    System.out.println(e.getMessage());
-                }
-                finally {
-                    countDownLatch.countDown();
-                } });
-        }
-        countDownLatch.await();
-
-        Long result = coreProductRepository.findById(coreProductId).orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다.")).getStock();
-        List<Order> orders = orderRepository.findAll();
-        log.info("핵심 상품 재고 수량 : "+result);
-        Assertions.assertNotEquals(ACTUAL_STOCK + requestCount, result);
-        for(int i=0; i<3; i++){
-            Assertions.assertNotEquals(OrderStatus.FAIL, orders.get(i).getOrderStatus());
-        }
-    }
-
     /**
      * 결제 실패를 상정하고 각 주문을 롤백함
      * 1. 주문의 상태를 실패로 수정
-     * 2. 유형 제품의 상태를 대기로 수정, 주문 레코드와 연관관계 끊기
+     * 2. 유형 제품의 상태를 대기로 수정, 주문 레코드와
      * 3. 핵심 제품의 재고를 늘리기
      * @throws InterruptedException
      */
@@ -158,10 +123,14 @@ public class OrderServiceRollbackTest {
 
         Long result = coreProductRepository.findById(coreProductId).orElseThrow(() -> new RuntimeException("존재하지 않는 상품입니다.")).getStock();
         List<Order> orders = orderRepository.findAll();
-        log.info("핵심 상품 재고 수량 : "+result);
+//        log.info("핵심 상품 재고 수량 : "+result);
         Assertions.assertEquals(ACTUAL_STOCK + requestCount, result);
         for(int i=0; i<3; i++){
             Assertions.assertEquals(OrderStatus.FAIL, orders.get(i).getOrderStatus());
+            List<ActualProduct> actualProducts = actualProductRepository.findByOrder_Id(orders.get(i).getId());
+            for(ActualProduct a : actualProducts){
+                Assertions.assertEquals(ActualStatus.PENDING_ORDER, a.getActualStatus());
+            }
         }
     }
 

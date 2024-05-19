@@ -77,8 +77,9 @@ public class ProductServiceImpl implements ProductService{
         return coreProduct.addStrock(-reqStock);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     public long subtractCoreProductStockPessimistic(Long coreProductId, Long reqStock){
+        System.out.println("핵심 상품 쿼리");
         CoreProduct coreProduct = coreProductRepository.findByIdPessimistic(coreProductId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.FAIL));
         long stock = coreProduct.getStock();

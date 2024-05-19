@@ -9,6 +9,7 @@ import java.util.Map;
 public interface ProductService {
     List<ActualProduct> findActualProductsByOrder(Long orderId);
     List<ActualProduct> findActualProducts(Long coreProductId, ActualStatus actualStatus, Long stock);
+
     List<ActualProduct> concatActualProductList(Map<Long, Long> coreProducts);
     void updateCoreProductsStock(Map<Long, Long> requireProducts);
     long subtractCoreProductStock(Long coreProductId, Long reqStock);
